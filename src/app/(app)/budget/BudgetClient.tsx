@@ -55,6 +55,7 @@ export default function BudgetClient({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState(() => emptyForm(categories, today));
+  const [searchQuery, setSearchQuery] = useState("");
 
   const months = useMemo(() => monthOptions(transactions, defaultMonth), [transactions, defaultMonth]);
 
@@ -65,6 +66,23 @@ export default function BudgetClient({
         .sort((a, b) => b.date.localeCompare(a.date)),
     [transactions, month]
   );
+
+  const isSearching = searchQuery.trim().length > 0;
+
+  const searchResults = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return [];
+    return transactions
+      .filter((t) => {
+        const categoryName = findCategoryById(categories, t.categoryId)?.name ?? "";
+        return (
+          (t.memo ?? "").toLowerCase().includes(q) || categoryName.toLowerCase().includes(q)
+        );
+      })
+      .sort((a, b) => b.date.localeCompare(a.date));
+  }, [transactions, categories, searchQuery]);
+
+  const visibleTx = isSearching ? searchResults : monthTx;
 
   const income = monthTx.filter((t) => t.type === "income").reduce((s, t) => s + t.amount, 0);
   const expense = monthTx.filter((t) => t.type === "expense").reduce((s, t) => s + t.amount, 0);
@@ -239,14 +257,47 @@ export default function BudgetClient({
       </section>
 
       <section>
-        <h2 className="mb-2 px-1 text-[13px] font-semibold uppercase tracking-wide text-slate-400">
-          明細一覧
-        </h2>
-        <div className="divide-y divide-slate-100 rounded-2xl bg-white shadow-sm ring-1 ring-slate-900/5">
-          {monthTx.length === 0 && (
-            <p className="p-4 text-[13px] text-slate-400">この月の記録はありません</p>
+        <div className="mb-2 flex items-center justify-between px-1">
+          <h2 className="text-[13px] font-semibold uppercase tracking-wide text-slate-400">
+            {isSearching ? "検索結果" : "明細一覧"}
+          </h2>
+        </div>
+        <div className="relative mb-2">
+          <svg
+            className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
+            viewBox="0 0 20 20"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
+            <circle cx="9" cy="9" r="6" />
+            <path d="m17 17-3.5-3.5" strokeLinecap="round" />
+          </svg>
+          <input
+            type="search"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="カテゴリ・メモで検索（全期間）"
+            className="w-full rounded-full border border-slate-200 bg-white py-2.5 pl-10 pr-9 text-[15px] shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+          />
+          {searchQuery && (
+            <button
+              type="button"
+              onClick={() => setSearchQuery("")}
+              className="absolute right-3 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full bg-slate-200 text-[11px] text-slate-600 active:bg-slate-300"
+              aria-label="検索をクリア"
+            >
+              ✕
+            </button>
           )}
-          {monthTx.map((t) => {
+        </div>
+        <div className="divide-y divide-slate-100 rounded-2xl bg-white shadow-sm ring-1 ring-slate-900/5">
+          {visibleTx.length === 0 && (
+            <p className="p-4 text-[13px] text-slate-400">
+              {isSearching ? "該当する記録が見つかりません" : "この月の記録はありません"}
+            </p>
+          )}
+          {visibleTx.map((t) => {
             const category = findCategoryById(categories, t.categoryId);
             return (
               <div key={t.id} className="flex items-center gap-3 p-3.5">
