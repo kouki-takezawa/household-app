@@ -113,6 +113,7 @@ export default function BudgetClient({
   }
 
   async function handleDelete(id: string) {
+    if (!confirm("この記録を削除しますか？")) return;
     setTransactions((prev) => prev.filter((t) => t.id !== id));
     await removeTransaction(id);
   }

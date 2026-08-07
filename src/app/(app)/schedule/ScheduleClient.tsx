@@ -152,6 +152,7 @@ export default function ScheduleClient({
   }
 
   async function handleDelete(id: string) {
+    if (!confirm("この予定を削除しますか？")) return;
     setEvents((prev) => prev.filter((e) => e.id !== id));
     setShowForm(false);
     await removeEvent(id);

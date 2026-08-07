@@ -53,6 +53,16 @@ export async function addAssetSnapshot(data: AssetSnapshot) {
   revalidateAll();
 }
 
+export async function editAssetSnapshot(id: string, data: Partial<AssetSnapshot>) {
+  await gas.updateRow("AssetSnapshots", id, data);
+  revalidateAll();
+}
+
+export async function removeAssetSnapshot(id: string) {
+  await gas.deleteRow("AssetSnapshots", id);
+  revalidateAll();
+}
+
 // ---- Members ------------------------------------------------------------
 
 export async function addMember(data: Member) {

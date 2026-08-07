@@ -15,7 +15,7 @@ import {
   YAxis,
 } from "recharts";
 import { type AssetAccount, type AssetSnapshot, formatYen, todayStr } from "@/lib/types";
-import { addAssetSnapshot } from "@/lib/actions";
+import { addAssetSnapshot, editAssetSnapshot, removeAssetSnapshot } from "@/lib/actions";
 
 const TYPE_LABEL: Record<AssetAccount["type"], string> = {
   cash: "現金",
@@ -49,8 +49,15 @@ export default function AssetsClient({
   const today = todayStr();
   const [snapshots, setSnapshots] = useState<AssetSnapshot[]>(initialSnapshots);
   const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState(() => emptyForm(accounts[0]?.id ?? "", today));
+
+  const accountById = useMemo(() => {
+    const map = new Map<string, AssetAccount>();
+    for (const a of accounts) map.set(a.id, a);
+    return map;
+  }, [accounts]);
 
   const latestByAccount = useMemo(
     () =>
@@ -91,9 +98,32 @@ export default function AssetsClient({
     });
   }, [snapshots, accounts]);
 
-  function openForm(accountId: string) {
+  const history = useMemo(
+    () => [...snapshots].sort((a, b) => b.date.localeCompare(a.date)),
+    [snapshots]
+  );
+
+  function openNewForm(accountId: string) {
+    setEditingId(null);
     setForm(emptyForm(accountId, today));
     setShowForm(true);
+  }
+
+  function openEditForm(snapshot: AssetSnapshot) {
+    setEditingId(snapshot.id);
+    setForm({
+      assetAccountId: snapshot.assetAccountId,
+      date: snapshot.date,
+      value: String(snapshot.value),
+      note: snapshot.note ?? "",
+    });
+    setShowForm(true);
+  }
+
+  async function handleDelete(id: string) {
+    if (!confirm("この記録を削除しますか？")) return;
+    setSnapshots((prev) => prev.filter((s) => s.id !== id));
+    await removeAssetSnapshot(id);
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -101,15 +131,28 @@ export default function AssetsClient({
     const value = Number(form.value);
     if (!value || value < 0) return;
     setSaving(true);
-    const newSnapshot: AssetSnapshot = {
-      id: `s${Date.now()}`,
-      assetAccountId: form.assetAccountId,
-      date: form.date,
-      value,
-      note: form.note || undefined,
-    };
-    setSnapshots((prev) => [...prev, newSnapshot]);
-    await addAssetSnapshot(newSnapshot);
+
+    if (editingId) {
+      const updated: AssetSnapshot = {
+        id: editingId,
+        assetAccountId: form.assetAccountId,
+        date: form.date,
+        value,
+        note: form.note || undefined,
+      };
+      setSnapshots((prev) => prev.map((s) => (s.id === editingId ? updated : s)));
+      await editAssetSnapshot(editingId, updated);
+    } else {
+      const newSnapshot: AssetSnapshot = {
+        id: `s${Date.now()}`,
+        assetAccountId: form.assetAccountId,
+        date: form.date,
+        value,
+        note: form.note || undefined,
+      };
+      setSnapshots((prev) => [...prev, newSnapshot]);
+      await addAssetSnapshot(newSnapshot);
+    }
     setSaving(false);
     setShowForm(false);
   }
@@ -195,13 +238,57 @@ export default function AssetsClient({
               </p>
               <button
                 type="button"
-                onClick={() => openForm(account.id)}
+                onClick={() => openNewForm(account.id)}
                 className="rounded-full px-2.5 py-1.5 text-[12px] font-medium text-emerald-600 active:bg-emerald-50"
               >
                 記録
               </button>
             </div>
           ))}
+        </div>
+      </section>
+
+      <section>
+        <h2 className="mb-2 px-1 text-[13px] font-semibold uppercase tracking-wide text-slate-400">
+          記録履歴
+        </h2>
+        <div className="divide-y divide-slate-100 rounded-2xl bg-white shadow-sm ring-1 ring-slate-900/5">
+          {history.length === 0 && (
+            <p className="p-4 text-[13px] text-slate-400">記録はまだありません</p>
+          )}
+          {history.map((s) => {
+            const account = accountById.get(s.assetAccountId);
+            return (
+              <div key={s.id} className="flex items-center gap-3 p-3.5">
+                <span
+                  className="h-2.5 w-2.5 flex-shrink-0 rounded-full"
+                  style={{ backgroundColor: account ? TYPE_COLOR[account.type] : "#94a3b8" }}
+                />
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-[15px] font-medium text-slate-800">
+                    {account?.name ?? "不明な口座"}
+                    {s.note ? ` ・ ${s.note}` : ""}
+                  </p>
+                  <p className="text-[12px] text-slate-400">{s.date}</p>
+                </div>
+                <p className="text-[15px] font-semibold text-slate-900">{formatYen(s.value)}</p>
+                <button
+                  type="button"
+                  onClick={() => openEditForm(s)}
+                  className="rounded-full px-2.5 py-1.5 text-[12px] text-slate-500 active:bg-slate-100"
+                >
+                  編集
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleDelete(s.id)}
+                  className="rounded-full px-2.5 py-1.5 text-[12px] text-rose-500 active:bg-rose-50"
+                >
+                  削除
+                </button>
+              </div>
+            );
+          })}
         </div>
       </section>
 
@@ -213,7 +300,9 @@ export default function AssetsClient({
             style={{ paddingBottom: "calc(1.5rem + env(safe-area-inset-bottom))" }}
           >
             <div className="mx-auto mb-3 h-1.5 w-10 rounded-full bg-slate-300 sm:hidden" />
-            <h3 className="mb-4 text-[17px] font-bold text-slate-900">残高・評価額を記録</h3>
+            <h3 className="mb-4 text-[17px] font-bold text-slate-900">
+              {editingId ? "記録を編集" : "残高・評価額を記録"}
+            </h3>
             <div className="flex flex-col gap-3">
               <label className="text-[12px] text-slate-400">
                 資産口座
@@ -263,6 +352,18 @@ export default function AssetsClient({
               </label>
             </div>
             <div className="mt-5 flex gap-2">
+              {editingId && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowForm(false);
+                    handleDelete(editingId);
+                  }}
+                  className="rounded-full border border-rose-200 px-4 py-3 text-[15px] font-semibold text-rose-500 active:bg-rose-50"
+                >
+                  削除
+                </button>
+              )}
               <button
                 type="button"
                 onClick={() => setShowForm(false)}
