@@ -14,20 +14,15 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { type AssetAccount, type AssetSnapshot, formatYen, todayStr } from "@/lib/types";
+import {
+  type AssetAccount,
+  type AssetSnapshot,
+  ASSET_TYPE_LABEL as TYPE_LABEL,
+  ASSET_TYPE_COLOR as TYPE_COLOR,
+  formatYen,
+  todayStr,
+} from "@/lib/types";
 import { addAssetSnapshot, editAssetSnapshot, removeAssetSnapshot } from "@/lib/actions";
-
-const TYPE_LABEL: Record<AssetAccount["type"], string> = {
-  cash: "現金",
-  bank: "銀行預金",
-  investment: "投資信託・株式等",
-};
-
-const TYPE_COLOR: Record<AssetAccount["type"], string> = {
-  cash: "#f59e0b",
-  bank: "#3b82f6",
-  investment: "#10b981",
-};
 
 function latestSnapshot(snapshots: AssetSnapshot[], accountId: string) {
   return snapshots

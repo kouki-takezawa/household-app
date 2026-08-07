@@ -39,6 +39,18 @@ export type AssetAccount = {
   memberId?: string;
 };
 
+export const ASSET_TYPE_LABEL: Record<AssetAccount["type"], string> = {
+  cash: "現金",
+  bank: "銀行預金",
+  investment: "投資信託・株式等",
+};
+
+export const ASSET_TYPE_COLOR: Record<AssetAccount["type"], string> = {
+  cash: "#f59e0b",
+  bank: "#3b82f6",
+  investment: "#10b981",
+};
+
 export type AssetSnapshot = {
   id: string;
   assetAccountId: string;

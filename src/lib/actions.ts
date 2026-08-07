@@ -2,7 +2,14 @@
 
 import { revalidatePath } from "next/cache";
 import * as gas from "./gas";
-import type { AssetSnapshot, Category, Member, ScheduleEvent, Transaction } from "./types";
+import type {
+  AssetAccount,
+  AssetSnapshot,
+  Category,
+  Member,
+  ScheduleEvent,
+  Transaction,
+} from "./types";
 
 function revalidateAll() {
   revalidatePath("/");
@@ -60,6 +67,18 @@ export async function editAssetSnapshot(id: string, data: Partial<AssetSnapshot>
 
 export async function removeAssetSnapshot(id: string) {
   await gas.deleteRow("AssetSnapshots", id);
+  revalidateAll();
+}
+
+// ---- Asset accounts --------------------------------------------------
+
+export async function addAssetAccount(data: AssetAccount) {
+  await gas.createRow("AssetAccounts", data);
+  revalidateAll();
+}
+
+export async function removeAssetAccount(id: string) {
+  await gas.deleteRow("AssetAccounts", id);
   revalidateAll();
 }
 
