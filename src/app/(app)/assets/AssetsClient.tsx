@@ -14,10 +14,8 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { type AssetAccount, type AssetSnapshot, formatYen } from "@/lib/types";
+import { type AssetAccount, type AssetSnapshot, formatYen, todayStr } from "@/lib/types";
 import { addAssetSnapshot } from "@/lib/actions";
-
-const TODAY = "2026-08-06";
 
 const TYPE_LABEL: Record<AssetAccount["type"], string> = {
   cash: "現金",
@@ -37,8 +35,8 @@ function latestSnapshot(snapshots: AssetSnapshot[], accountId: string) {
     .sort((a, b) => b.date.localeCompare(a.date))[0];
 }
 
-function emptyForm(accountId: string) {
-  return { assetAccountId: accountId, date: TODAY, value: "", note: "" };
+function emptyForm(accountId: string, today: string) {
+  return { assetAccountId: accountId, date: today, value: "", note: "" };
 }
 
 export default function AssetsClient({
@@ -48,10 +46,11 @@ export default function AssetsClient({
   accounts: AssetAccount[];
   initialSnapshots: AssetSnapshot[];
 }) {
+  const today = todayStr();
   const [snapshots, setSnapshots] = useState<AssetSnapshot[]>(initialSnapshots);
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [form, setForm] = useState(emptyForm(accounts[0]?.id ?? ""));
+  const [form, setForm] = useState(() => emptyForm(accounts[0]?.id ?? "", today));
 
   const latestByAccount = useMemo(
     () =>
@@ -93,7 +92,7 @@ export default function AssetsClient({
   }, [snapshots, accounts]);
 
   function openForm(accountId: string) {
-    setForm(emptyForm(accountId));
+    setForm(emptyForm(accountId, today));
     setShowForm(true);
   }
 

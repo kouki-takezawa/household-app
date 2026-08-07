@@ -47,6 +47,18 @@ export type AssetSnapshot = {
   note?: string;
 };
 
+const JST_DATE_FORMATTER = new Intl.DateTimeFormat("en-CA", {
+  timeZone: "Asia/Tokyo",
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+});
+
+/** 実行環境のタイムゾーンに関わらず、日本時間での「今日」を YYYY-MM-DD で返す */
+export function todayStr(): string {
+  return JST_DATE_FORMATTER.format(new Date());
+}
+
 export function findMemberById(members: Member[], id: string): Member | undefined {
   return members.find((m) => m.id === id);
 }
