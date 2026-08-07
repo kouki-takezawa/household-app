@@ -6,13 +6,19 @@ import {
   getAssetSnapshots,
   getMembers,
 } from "@/lib/gas";
-import { findMemberById, formatYen, formatEventSchedule, type ScheduleEvent } from "@/lib/types";
+import {
+  findMemberById,
+  formatYen,
+  formatEventSchedule,
+  todayStr,
+  type ScheduleEvent,
+} from "@/lib/types";
 
-const TODAY = "2026-08-06";
-const CURRENT_MONTH = TODAY.slice(0, 7); // "2026-08"
-
-function monthlySummary(transactions: Awaited<ReturnType<typeof getTransactions>>) {
-  const thisMonth = transactions.filter((t) => t.date.startsWith(CURRENT_MONTH));
+function monthlySummary(
+  transactions: Awaited<ReturnType<typeof getTransactions>>,
+  currentMonth: string
+) {
+  const thisMonth = transactions.filter((t) => t.date.startsWith(currentMonth));
   const income = thisMonth
     .filter((t) => t.type === "income")
     .reduce((sum, t) => sum + t.amount, 0);
@@ -22,9 +28,9 @@ function monthlySummary(transactions: Awaited<ReturnType<typeof getTransactions>
   return { income, expense, balance: income - expense };
 }
 
-function upcomingEvents(events: ScheduleEvent[], limit = 4) {
+function upcomingEvents(events: ScheduleEvent[], today: string, limit = 4) {
   return [...events]
-    .filter((e) => e.endDate >= TODAY)
+    .filter((e) => e.endDate >= today)
     .sort((a, b) => a.startDate.localeCompare(b.startDate))
     .slice(0, limit);
 }
@@ -52,15 +58,18 @@ export default async function HomePage() {
     getMembers(),
   ]);
 
-  const { income, expense, balance } = monthlySummary(transactions);
-  const upcoming = upcomingEvents(events);
+  const today = todayStr();
+  const currentMonth = today.slice(0, 7);
+
+  const { income, expense, balance } = monthlySummary(transactions, currentMonth);
+  const upcoming = upcomingEvents(events, today);
   const assetsTotal = totalAssets(accounts, snapshots);
 
   return (
     <div className="flex flex-col gap-7 pt-1">
       <section>
         <h2 className="mb-2 px-1 text-[13px] font-semibold uppercase tracking-wide text-slate-400">
-          今月の収支（{CURRENT_MONTH}）
+          今月の収支（{currentMonth}）
         </h2>
         <div className="grid grid-cols-3 gap-2.5">
           <div className="rounded-2xl bg-white p-3.5 shadow-sm ring-1 ring-slate-900/5">

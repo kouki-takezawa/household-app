@@ -25,10 +25,10 @@ import {
   type ScheduleEvent,
   findMemberById,
   formatEventSchedule,
+  todayStr,
 } from "@/lib/types";
 import { addEvent, editEvent, removeEvent } from "@/lib/actions";
 
-const TODAY = parseISO("2026-08-06");
 const WEEKDAYS = ["日", "月", "火", "水", "木", "金", "土"];
 
 function eventOccursOn(event: ScheduleEvent, date: Date): boolean {
@@ -78,6 +78,8 @@ export default function ScheduleClient({
   members: Member[];
   initialEvents: ScheduleEvent[];
 }) {
+  const TODAY = useMemo(() => parseISO(todayStr()), []);
+
   const [events, setEvents] = useState<ScheduleEvent[]>(initialEvents);
   const [viewMode, setViewMode] = useState<"month" | "week">("month");
   const [cursor, setCursor] = useState(TODAY);
@@ -88,7 +90,7 @@ export default function ScheduleClient({
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
-  const [form, setForm] = useState(emptyForm(format(TODAY, "yyyy-MM-dd"), members));
+  const [form, setForm] = useState(() => emptyForm(format(TODAY, "yyyy-MM-dd"), members));
 
   const visibleEvents = useMemo(
     () => events.filter((e) => memberFilter.has(e.memberId)),

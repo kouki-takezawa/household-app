@@ -19,21 +19,19 @@ import {
   type Transaction,
   findCategoryById,
   formatYen,
+  todayStr,
 } from "@/lib/types";
 import { addTransaction, editTransaction, removeTransaction } from "@/lib/actions";
 
-const TODAY = "2026-08-06";
-const DEFAULT_MONTH = TODAY.slice(0, 7);
-
-function monthOptions(txs: Transaction[]): string[] {
+function monthOptions(txs: Transaction[], defaultMonth: string): string[] {
   const set = new Set(txs.map((t) => t.date.slice(0, 7)));
-  set.add(DEFAULT_MONTH);
+  set.add(defaultMonth);
   return [...set].sort().reverse();
 }
 
-function emptyForm(categories: Category[]) {
+function emptyForm(categories: Category[], today: string) {
   return {
-    date: TODAY,
+    date: today,
     type: "expense" as "income" | "expense",
     categoryId: categories.find((c) => c.type === "expense")?.id ?? "",
     amount: "",
@@ -48,14 +46,17 @@ export default function BudgetClient({
   categories: Category[];
   initialTransactions: Transaction[];
 }) {
+  const today = todayStr();
+  const defaultMonth = today.slice(0, 7);
+
   const [transactions, setTransactions] = useState<Transaction[]>(initialTransactions);
-  const [month, setMonth] = useState(DEFAULT_MONTH);
+  const [month, setMonth] = useState(defaultMonth);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
-  const [form, setForm] = useState(emptyForm(categories));
+  const [form, setForm] = useState(() => emptyForm(categories, today));
 
-  const months = useMemo(() => monthOptions(transactions), [transactions]);
+  const months = useMemo(() => monthOptions(transactions, defaultMonth), [transactions, defaultMonth]);
 
   const monthTx = useMemo(
     () =>
@@ -95,7 +96,7 @@ export default function BudgetClient({
 
   function openNewForm() {
     setEditingId(null);
-    setForm(emptyForm(categories));
+    setForm(emptyForm(categories, today));
     setShowForm(true);
   }
 
