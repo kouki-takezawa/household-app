@@ -27,8 +27,13 @@ function requireUrl(): string {
   return GAS_URL;
 }
 
+// GASの応答は遅い（数秒）ため、短時間キャッシュして画面遷移を高速化する。
+// 追加・編集・削除のたびに actions.ts の revalidatePath が全ページのキャッシュを
+// 破棄するので、データが古いまま表示され続けることはない。
 async function gasGet<T>(sheet: SheetName): Promise<T[]> {
-  const res = await fetch(`${requireUrl()}?sheet=${sheet}`, { cache: "no-store" });
+  const res = await fetch(`${requireUrl()}?sheet=${sheet}`, {
+    next: { revalidate: 30 },
+  });
   if (!res.ok) throw new Error(`GAS GET ${sheet} failed: ${res.status}`);
   return res.json();
 }
