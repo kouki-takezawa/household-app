@@ -44,6 +44,7 @@ export default function SettingsClient({
   }
 
   async function removeMember(id: string) {
+    if (!confirm("このメンバーを削除しますか？\n過去の予定などに紐づいている場合、表示に影響することがあります。")) return;
     setMembers((prev) => prev.filter((m) => m.id !== id));
     await removeMemberAction(id);
   }
@@ -63,6 +64,7 @@ export default function SettingsClient({
   }
 
   async function removeCategory(id: string) {
+    if (!confirm("このカテゴリを削除しますか？\n過去の記録などに紐づいている場合、表示に影響することがあります。")) return;
     setCategories((prev) => prev.filter((c) => c.id !== id));
     await removeCategoryAction(id);
   }
