@@ -17,8 +17,10 @@ import {
 } from "recharts";
 import {
   type Category,
+  type Member,
   type Transaction,
   findCategoryById,
+  findMemberById,
   formatYen,
   todayStr,
 } from "@/lib/types";
@@ -30,11 +32,18 @@ function monthOptions(txs: Transaction[], defaultMonth: string): string[] {
   return [...set].sort().reverse();
 }
 
-function emptyForm(categories: Category[], today: string) {
+function yearOptions(txs: Transaction[], defaultYear: string): string[] {
+  const set = new Set(txs.map((t) => t.date.slice(0, 4)));
+  set.add(defaultYear);
+  return [...set].sort().reverse();
+}
+
+function emptyForm(categories: Category[], members: Member[], today: string) {
   return {
     date: today,
     type: "expense" as "income" | "expense",
     categoryId: categories.find((c) => c.type === "expense")?.id ?? "",
+    memberId: members[0]?.id ?? "",
     amount: "",
     memo: "",
   };
@@ -42,31 +51,36 @@ function emptyForm(categories: Category[], today: string) {
 
 export default function BudgetClient({
   categories,
+  members,
   initialTransactions,
 }: {
   categories: Category[];
+  members: Member[];
   initialTransactions: Transaction[];
 }) {
   const today = todayStr();
   const defaultMonth = today.slice(0, 7);
+  const defaultYear = today.slice(0, 4);
 
   const [transactions, setTransactions] = useState<Transaction[]>(initialTransactions);
+  const [periodMode, setPeriodMode] = useState<"month" | "year">("month");
   const [month, setMonth] = useState(defaultMonth);
+  const [year, setYear] = useState(defaultYear);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
-  const [form, setForm] = useState(() => emptyForm(categories, today));
+  const [form, setForm] = useState(() => emptyForm(categories, members, today));
   const [searchQuery, setSearchQuery] = useState("");
 
   const months = useMemo(() => monthOptions(transactions, defaultMonth), [transactions, defaultMonth]);
+  const years = useMemo(() => yearOptions(transactions, defaultYear), [transactions, defaultYear]);
 
-  const monthTx = useMemo(
-    () =>
-      transactions
-        .filter((t) => t.date.startsWith(month))
-        .sort((a, b) => b.date.localeCompare(a.date)),
-    [transactions, month]
-  );
+  const periodTx = useMemo(() => {
+    const prefix = periodMode === "month" ? month : year;
+    return transactions
+      .filter((t) => t.date.startsWith(prefix))
+      .sort((a, b) => b.date.localeCompare(a.date));
+  }, [transactions, periodMode, month, year]);
 
   const isSearching = searchQuery.trim().length > 0;
 
@@ -83,14 +97,14 @@ export default function BudgetClient({
       .sort((a, b) => b.date.localeCompare(a.date));
   }, [transactions, categories, searchQuery]);
 
-  const visibleTx = isSearching ? searchResults : monthTx;
+  const visibleTx = isSearching ? searchResults : periodTx;
 
-  const income = monthTx.filter((t) => t.type === "income").reduce((s, t) => s + t.amount, 0);
-  const expense = monthTx.filter((t) => t.type === "expense").reduce((s, t) => s + t.amount, 0);
+  const income = periodTx.filter((t) => t.type === "income").reduce((s, t) => s + t.amount, 0);
+  const expense = periodTx.filter((t) => t.type === "expense").reduce((s, t) => s + t.amount, 0);
 
   const categoryBreakdown = useMemo(() => {
     const map = new Map<string, number>();
-    for (const t of monthTx) {
+    for (const t of periodTx) {
       if (t.type !== "expense") continue;
       map.set(t.categoryId, (map.get(t.categoryId) ?? 0) + t.amount);
     }
@@ -99,23 +113,36 @@ export default function BudgetClient({
       value,
       color: findCategoryById(categories, categoryId)?.color ?? "#94a3b8",
     }));
-  }, [monthTx, categories]);
+  }, [periodTx, categories]);
 
-  const trend = useMemo(() => {
+  const monthlyTrend = useMemo(() => {
     const recentMonths = [...months].sort().slice(-6);
     return recentMonths.map((m) => {
       const tx = transactions.filter((t) => t.date.startsWith(m));
       return {
-        month: m.slice(5) + "月",
+        label: m.slice(5) + "月",
         収入: tx.filter((t) => t.type === "income").reduce((s, t) => s + t.amount, 0),
         支出: tx.filter((t) => t.type === "expense").reduce((s, t) => s + t.amount, 0),
       };
     });
   }, [transactions, months]);
 
+  const yearlyTrend = useMemo(() => {
+    return [...years].sort().map((y) => {
+      const tx = transactions.filter((t) => t.date.startsWith(y));
+      return {
+        label: y + "年",
+        収入: tx.filter((t) => t.type === "income").reduce((s, t) => s + t.amount, 0),
+        支出: tx.filter((t) => t.type === "expense").reduce((s, t) => s + t.amount, 0),
+      };
+    });
+  }, [transactions, years]);
+
+  const trend = periodMode === "month" ? monthlyTrend : yearlyTrend;
+
   function openNewForm() {
     setEditingId(null);
-    setForm(emptyForm(categories, today));
+    setForm(emptyForm(categories, members, today));
     setShowForm(true);
   }
 
@@ -125,6 +152,7 @@ export default function BudgetClient({
       date: t.date,
       type: t.type,
       categoryId: t.categoryId,
+      memberId: t.memberId ?? members[0]?.id ?? "",
       amount: String(t.amount),
       memo: t.memo ?? "",
     });
@@ -149,6 +177,7 @@ export default function BudgetClient({
         date: form.date,
         type: form.type,
         categoryId: form.categoryId,
+        memberId: form.memberId || undefined,
         amount,
         memo: form.memo || undefined,
       };
@@ -160,6 +189,7 @@ export default function BudgetClient({
         date: form.date,
         type: form.type,
         categoryId: form.categoryId,
+        memberId: form.memberId || undefined,
         amount,
         memo: form.memo || undefined,
       };
@@ -176,25 +206,62 @@ export default function BudgetClient({
     <div className="flex flex-col gap-6">
       <PageHeader title="家計簿" />
 
-      <section className="flex items-center justify-between gap-2">
-        <select
-          value={month}
-          onChange={(e) => setMonth(e.target.value)}
-          className="rounded-full border border-slate-200 bg-white px-4 py-2 text-[15px] font-medium text-slate-700 shadow-sm"
-        >
-          {months.map((m) => (
-            <option key={m} value={m}>
-              {m}
-            </option>
-          ))}
-        </select>
-        <button
-          type="button"
-          onClick={openNewForm}
-          className="rounded-full bg-emerald-600 px-4 py-2 text-[14px] font-semibold text-white shadow-sm shadow-emerald-600/30 transition-transform active:scale-95"
-        >
-          ＋ 記録
-        </button>
+      <section className="flex flex-col gap-2.5">
+        <div className="flex w-fit gap-1 rounded-xl bg-slate-100 p-1 text-[13px]">
+          <button
+            type="button"
+            onClick={() => setPeriodMode("month")}
+            className={`rounded-lg px-3 py-1.5 font-semibold transition-colors ${
+              periodMode === "month" ? "bg-white text-amber-700 shadow-sm" : "text-slate-500"
+            }`}
+          >
+            月次
+          </button>
+          <button
+            type="button"
+            onClick={() => setPeriodMode("year")}
+            className={`rounded-lg px-3 py-1.5 font-semibold transition-colors ${
+              periodMode === "year" ? "bg-white text-amber-700 shadow-sm" : "text-slate-500"
+            }`}
+          >
+            年次
+          </button>
+        </div>
+
+        <div className="flex items-center justify-between gap-2">
+          {periodMode === "month" ? (
+            <select
+              value={month}
+              onChange={(e) => setMonth(e.target.value)}
+              className="rounded-full border border-slate-200 bg-white px-4 py-2 text-[15px] font-medium text-slate-700 shadow-sm"
+            >
+              {months.map((m) => (
+                <option key={m} value={m}>
+                  {m}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <select
+              value={year}
+              onChange={(e) => setYear(e.target.value)}
+              className="rounded-full border border-slate-200 bg-white px-4 py-2 text-[15px] font-medium text-slate-700 shadow-sm"
+            >
+              {years.map((y) => (
+                <option key={y} value={y}>
+                  {y}年
+                </option>
+              ))}
+            </select>
+          )}
+          <button
+            type="button"
+            onClick={openNewForm}
+            className="rounded-full bg-amber-600 px-4 py-2 text-[14px] font-semibold text-white shadow-sm shadow-amber-600/30 transition-transform active:scale-95"
+          >
+            ＋ 記録
+          </button>
+        </div>
       </section>
 
       <section className="grid grid-cols-3 gap-2.5">
@@ -242,13 +309,13 @@ export default function BudgetClient({
 
       <section className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-900/5">
         <h2 className="mb-2 text-[13px] font-semibold uppercase tracking-wide text-slate-400">
-          月別推移
+          {periodMode === "month" ? "月別推移（直近6ヶ月）" : "年別推移"}
         </h2>
         <div className="h-56">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={trend}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-              <XAxis dataKey="month" fontSize={12} stroke="#94a3b8" />
+              <XAxis dataKey="label" fontSize={12} stroke="#94a3b8" />
               <YAxis fontSize={12} stroke="#94a3b8" tickFormatter={(v) => `${v / 10000}万`} />
               <Tooltip formatter={(v) => formatYen(Number(v ?? 0))} />
               <Legend />
@@ -281,7 +348,7 @@ export default function BudgetClient({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="カテゴリ・メモで検索（全期間）"
-            className="w-full rounded-full border border-slate-200 bg-white py-2.5 pl-10 pr-9 text-[15px] shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+            className="w-full rounded-full border border-slate-200 bg-white py-2.5 pl-10 pr-9 text-[15px] shadow-sm focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
           />
           {searchQuery && (
             <button
@@ -297,11 +364,12 @@ export default function BudgetClient({
         <div className="divide-y divide-slate-100 rounded-2xl bg-white shadow-sm ring-1 ring-slate-900/5">
           {visibleTx.length === 0 && (
             <p className="p-4 text-[13px] text-slate-400">
-              {isSearching ? "該当する記録が見つかりません" : "この月の記録はありません"}
+              {isSearching ? "該当する記録が見つかりません" : "この期間の記録はありません"}
             </p>
           )}
           {visibleTx.map((t) => {
             const category = findCategoryById(categories, t.categoryId);
+            const member = findMemberById(members, t.memberId);
             return (
               <div key={t.id} className="flex items-center gap-3 p-3.5">
                 <span
@@ -313,7 +381,10 @@ export default function BudgetClient({
                     {category?.name}
                     {t.memo ? ` ・ ${t.memo}` : ""}
                   </p>
-                  <p className="text-[12px] text-slate-400">{t.date}</p>
+                  <p className="text-[12px] text-slate-400">
+                    {t.date}
+                    {member ? ` ・ ${member.name}` : ""}
+                  </p>
                 </div>
                 <p
                   className={`text-[15px] font-semibold ${
@@ -399,7 +470,7 @@ export default function BudgetClient({
                   required
                   value={form.date}
                   onChange={(e) => setForm((f) => ({ ...f, date: e.target.value }))}
-                  className="mt-1 w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-[16px] focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                  className="mt-1 w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-[16px] focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
                 />
               </label>
 
@@ -411,7 +482,7 @@ export default function BudgetClient({
                   min={1}
                   value={form.amount}
                   onChange={(e) => setForm((f) => ({ ...f, amount: e.target.value }))}
-                  className="mt-1 w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-[16px] focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                  className="mt-1 w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-[16px] focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
                   placeholder="0"
                 />
               </label>
@@ -421,11 +492,26 @@ export default function BudgetClient({
                 <select
                   value={form.categoryId}
                   onChange={(e) => setForm((f) => ({ ...f, categoryId: e.target.value }))}
-                  className="mt-1 w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-[16px] focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                  className="mt-1 w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-[16px] focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
                 >
                   {availableCategories.map((c) => (
                     <option key={c.id} value={c.id}>
                       {c.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="text-[12px] text-slate-400">
+                記録者
+                <select
+                  value={form.memberId}
+                  onChange={(e) => setForm((f) => ({ ...f, memberId: e.target.value }))}
+                  className="mt-1 w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-[16px] focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
+                >
+                  {members.map((m) => (
+                    <option key={m.id} value={m.id}>
+                      {m.name}
                     </option>
                   ))}
                 </select>
@@ -437,7 +523,7 @@ export default function BudgetClient({
                   type="text"
                   value={form.memo}
                   onChange={(e) => setForm((f) => ({ ...f, memo: e.target.value }))}
-                  className="mt-1 w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-[16px] focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                  className="mt-1 w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-[16px] focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
                   placeholder="任意"
                 />
               </label>
@@ -454,7 +540,7 @@ export default function BudgetClient({
               <button
                 type="submit"
                 disabled={saving}
-                className="flex-1 rounded-full bg-emerald-600 py-3 text-[15px] font-semibold text-white shadow-sm shadow-emerald-600/30 transition-transform active:scale-[0.98] disabled:opacity-60"
+                className="flex-1 rounded-full bg-amber-600 py-3 text-[15px] font-semibold text-white shadow-sm shadow-amber-600/30 transition-transform active:scale-[0.98] disabled:opacity-60"
               >
                 {saving ? "保存中…" : "保存"}
               </button>

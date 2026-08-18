@@ -17,6 +17,7 @@ export type Transaction = {
   amount: number;
   type: "income" | "expense";
   categoryId: string;
+  memberId?: string; // 記録者（未設定の記録は表示上「不明」扱い）
   memo?: string;
 };
 

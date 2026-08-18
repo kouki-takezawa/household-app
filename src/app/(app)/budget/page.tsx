@@ -1,11 +1,18 @@
-import { getCategories, getTransactions } from "@/lib/gas";
+import { getCategories, getMembers, getTransactions } from "@/lib/gas";
 import BudgetClient from "./BudgetClient";
 
 export default async function BudgetPage() {
-  const [categories, transactions] = await Promise.all([
+  const [categories, members, transactions] = await Promise.all([
     getCategories(),
+    getMembers(),
     getTransactions(),
   ]);
 
-  return <BudgetClient categories={categories} initialTransactions={transactions} />;
+  return (
+    <BudgetClient
+      categories={categories}
+      members={members}
+      initialTransactions={transactions}
+    />
+  );
 }

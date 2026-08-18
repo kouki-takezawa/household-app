@@ -162,7 +162,7 @@ export default function AssetsClient({
           資産総額
         </h2>
         <div className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-900/5">
-          <p className="text-[26px] font-bold text-emerald-600">{formatYen(total)}</p>
+          <p className="text-[26px] font-bold text-amber-700">{formatYen(total)}</p>
           <p className="mt-1 text-[12px] text-slate-400">最新のスナップショット合計</p>
         </div>
       </section>
@@ -207,7 +207,7 @@ export default function AssetsClient({
               <YAxis fontSize={12} stroke="#94a3b8" tickFormatter={(v) => `${v / 10000}万`} />
               <Tooltip formatter={(v) => formatYen(Number(v ?? 0))} />
               <Legend />
-              <Line type="monotone" dataKey="資産合計" stroke="#10b981" strokeWidth={2.5} dot />
+              <Line type="monotone" dataKey="資産合計" stroke="#d97706" strokeWidth={2.5} dot />
             </LineChart>
           </ResponsiveContainer>
         </div>
@@ -237,7 +237,7 @@ export default function AssetsClient({
               <button
                 type="button"
                 onClick={() => openNewForm(account.id)}
-                className="rounded-full px-2.5 py-1.5 text-[12px] font-medium text-emerald-600 active:bg-emerald-50"
+                className="rounded-full px-2.5 py-1.5 text-[12px] font-medium text-amber-700 active:bg-amber-50"
               >
                 記録
               </button>
@@ -307,7 +307,7 @@ export default function AssetsClient({
                 <select
                   value={form.assetAccountId}
                   onChange={(e) => setForm((f) => ({ ...f, assetAccountId: e.target.value }))}
-                  className="mt-1 w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-[16px] focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                  className="mt-1 w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-[16px] focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
                 >
                   {accounts.map((a) => (
                     <option key={a.id} value={a.id}>
@@ -323,7 +323,7 @@ export default function AssetsClient({
                   required
                   value={form.date}
                   onChange={(e) => setForm((f) => ({ ...f, date: e.target.value }))}
-                  className="mt-1 w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-[16px] focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                  className="mt-1 w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-[16px] focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
                 />
               </label>
               <label className="text-[12px] text-slate-400">
@@ -334,7 +334,7 @@ export default function AssetsClient({
                   min={0}
                   value={form.value}
                   onChange={(e) => setForm((f) => ({ ...f, value: e.target.value }))}
-                  className="mt-1 w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-[16px] focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                  className="mt-1 w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-[16px] focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
                   placeholder="0"
                 />
               </label>
@@ -344,7 +344,7 @@ export default function AssetsClient({
                   type="text"
                   value={form.note}
                   onChange={(e) => setForm((f) => ({ ...f, note: e.target.value }))}
-                  className="mt-1 w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-[16px] focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                  className="mt-1 w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-[16px] focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
                   placeholder="任意"
                 />
               </label>
@@ -372,7 +372,7 @@ export default function AssetsClient({
               <button
                 type="submit"
                 disabled={saving}
-                className="flex-1 rounded-full bg-emerald-600 py-3 text-[15px] font-semibold text-white shadow-sm shadow-emerald-600/30 transition-transform active:scale-[0.98] disabled:opacity-60"
+                className="flex-1 rounded-full bg-amber-600 py-3 text-[15px] font-semibold text-white shadow-sm shadow-amber-600/30 transition-transform active:scale-[0.98] disabled:opacity-60"
               >
                 {saving ? "保存中…" : "保存"}
               </button>

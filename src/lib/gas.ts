@@ -63,7 +63,11 @@ export async function getCategories(): Promise<Category[]> {
 
 export async function getTransactions(): Promise<Transaction[]> {
   const rows = await gasGet<Transaction>("Transactions");
-  return rows.map((r) => ({ ...r, memo: emptyToUndefined(r.memo) }));
+  return rows.map((r) => ({
+    ...r,
+    memberId: emptyToUndefined(r.memberId),
+    memo: emptyToUndefined(r.memo),
+  }));
 }
 
 export async function getEvents(): Promise<ScheduleEvent[]> {

@@ -83,7 +83,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                   href={item.href}
                   className={clsx(
                     "flex flex-col items-center gap-0.5 pb-1 pt-2 text-[10px] font-medium transition-colors",
-                    active ? "text-emerald-600" : "text-slate-400"
+                    active ? "text-amber-700" : "text-slate-400"
                   )}
                 >
                   <span className="h-6 w-6">{item.icon}</span>
