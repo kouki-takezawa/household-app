@@ -72,7 +72,10 @@ export function todayStr(): string {
   return JST_DATE_FORMATTER.format(new Date());
 }
 
-export function findMemberById(members: Member[], id: string): Member | undefined {
+export function findMemberById(
+  members: Member[],
+  id: string | undefined
+): Member | undefined {
   return members.find((m) => m.id === id);
 }
 
