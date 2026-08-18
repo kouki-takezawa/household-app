@@ -1,4 +1,7 @@
 import Link from "next/link";
+import { format, parseISO } from "date-fns";
+import { ja } from "date-fns/locale";
+import PageHeader from "@/components/PageHeader";
 import {
   getTransactions,
   getEvents,
@@ -66,7 +69,12 @@ export default async function HomePage() {
   const assetsTotal = totalAssets(accounts, snapshots);
 
   return (
-    <div className="flex flex-col gap-7 pt-1">
+    <div className="flex flex-col gap-7">
+      <PageHeader
+        title="ホーム"
+        subtitle={format(parseISO(today), "M月d日(E)", { locale: ja })}
+      />
+
       <section>
         <h2 className="mb-2 px-1 text-[13px] font-semibold uppercase tracking-wide text-slate-400">
           今月の収支（{currentMonth}）
