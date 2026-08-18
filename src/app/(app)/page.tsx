@@ -101,7 +101,7 @@ export default async function HomePage() {
         </div>
         <Link
           href="/budget"
-          className="mt-2.5 inline-block px-1 text-[13px] font-medium text-emerald-600"
+          className="mt-2.5 inline-block px-1 text-[13px] font-medium text-amber-700"
         >
           家計簿を見る →
         </Link>
@@ -112,14 +112,14 @@ export default async function HomePage() {
           資産総額
         </h2>
         <div className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-900/5">
-          <p className="text-[26px] font-bold text-emerald-600">
+          <p className="text-[26px] font-bold text-amber-700">
             {formatYen(assetsTotal)}
           </p>
           <p className="mt-1 text-[12px] text-slate-400">最新のスナップショット合計</p>
         </div>
         <Link
           href="/assets"
-          className="mt-2.5 inline-block px-1 text-[13px] font-medium text-emerald-600"
+          className="mt-2.5 inline-block px-1 text-[13px] font-medium text-amber-700"
         >
           資産管理を見る →
         </Link>
@@ -155,7 +155,7 @@ export default async function HomePage() {
         </div>
         <Link
           href="/schedule"
-          className="mt-2.5 inline-block px-1 text-[13px] font-medium text-emerald-600"
+          className="mt-2.5 inline-block px-1 text-[13px] font-medium text-amber-700"
         >
           日程表を見る →
         </Link>

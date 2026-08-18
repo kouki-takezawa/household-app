@@ -214,7 +214,7 @@ export default function ScheduleClient({
                 ? setCursor((c) => subMonths(c, 1))
                 : setSelectedDate((d) => addDays(d, -7))
             }
-            className="flex h-9 w-9 items-center justify-center rounded-full text-emerald-600 active:bg-slate-100"
+            className="flex h-9 w-9 items-center justify-center rounded-full text-amber-700 active:bg-slate-100"
           >
             ‹
           </button>
@@ -228,7 +228,7 @@ export default function ScheduleClient({
                 ? setCursor((c) => addMonths(c, 1))
                 : setSelectedDate((d) => addDays(d, 7))
             }
-            className="flex h-9 w-9 items-center justify-center rounded-full text-emerald-600 active:bg-slate-100"
+            className="flex h-9 w-9 items-center justify-center rounded-full text-amber-700 active:bg-slate-100"
           >
             ›
           </button>
@@ -239,7 +239,7 @@ export default function ScheduleClient({
             onClick={() => setViewMode("month")}
             className={clsx(
               "rounded-lg px-3 py-1.5 font-semibold transition-colors",
-              viewMode === "month" ? "bg-white text-emerald-700 shadow-sm" : "text-slate-500"
+              viewMode === "month" ? "bg-white text-amber-700 shadow-sm" : "text-slate-500"
             )}
           >
             月
@@ -249,7 +249,7 @@ export default function ScheduleClient({
             onClick={() => setViewMode("week")}
             className={clsx(
               "rounded-lg px-3 py-1.5 font-semibold transition-colors",
-              viewMode === "week" ? "bg-white text-emerald-700 shadow-sm" : "text-slate-500"
+              viewMode === "week" ? "bg-white text-amber-700 shadow-sm" : "text-slate-500"
             )}
           >
             週
@@ -296,14 +296,14 @@ export default function ScheduleClient({
                 onClick={() => setSelectedDate(day)}
                 className={clsx(
                   "flex min-h-[3.4rem] flex-col items-center rounded-xl p-1 text-xs transition-colors",
-                  selected ? "bg-emerald-50 ring-1 ring-emerald-400" : "active:bg-slate-50",
+                  selected ? "bg-amber-50 ring-1 ring-amber-400" : "active:bg-slate-50",
                   !inMonth && "opacity-30"
                 )}
               >
                 <span
                   className={clsx(
                     "flex h-6 w-6 items-center justify-center rounded-full text-[13px]",
-                    isToday && "bg-emerald-600 text-white font-semibold"
+                    isToday && "bg-amber-600 text-white font-semibold"
                   )}
                 >
                   {format(day, "d")}
@@ -331,7 +331,7 @@ export default function ScheduleClient({
           <button
             type="button"
             onClick={() => openNewForm(selectedDate)}
-            className="rounded-full bg-emerald-600 px-3.5 py-1.5 text-[13px] font-semibold text-white shadow-sm shadow-emerald-600/30 transition-transform active:scale-95"
+            className="rounded-full bg-amber-600 px-3.5 py-1.5 text-[13px] font-semibold text-white shadow-sm shadow-amber-600/30 transition-transform active:scale-95"
           >
             ＋ 予定を追加
           </button>
@@ -387,7 +387,7 @@ export default function ScheduleClient({
                   required
                   value={form.title}
                   onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
-                  className="mt-1 w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-[16px] focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                  className="mt-1 w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-[16px] focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
                   placeholder="例: 家族会議"
                 />
               </label>
@@ -406,7 +406,7 @@ export default function ScheduleClient({
                         endDate: f.endDate < e.target.value ? e.target.value : f.endDate,
                       }))
                     }
-                    className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-[16px] focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                    className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-[16px] focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
                   />
                 </label>
                 <label className="text-[12px] text-slate-400">
@@ -415,7 +415,7 @@ export default function ScheduleClient({
                     type="time"
                     value={form.startTime}
                     onChange={(e) => setForm((f) => ({ ...f, startTime: e.target.value }))}
-                    className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-[16px] focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                    className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-[16px] focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
                   />
                 </label>
               </div>
@@ -429,7 +429,7 @@ export default function ScheduleClient({
                     min={form.startDate}
                     value={form.endDate}
                     onChange={(e) => setForm((f) => ({ ...f, endDate: e.target.value }))}
-                    className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-[16px] focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                    className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-[16px] focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
                   />
                 </label>
                 <label className="text-[12px] text-slate-400">
@@ -438,7 +438,7 @@ export default function ScheduleClient({
                     type="time"
                     value={form.endTime}
                     onChange={(e) => setForm((f) => ({ ...f, endTime: e.target.value }))}
-                    className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-[16px] focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                    className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-[16px] focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
                   />
                 </label>
               </div>
@@ -451,7 +451,7 @@ export default function ScheduleClient({
                 <select
                   value={form.memberId}
                   onChange={(e) => setForm((f) => ({ ...f, memberId: e.target.value }))}
-                  className="mt-1 w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-[16px] focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                  className="mt-1 w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-[16px] focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
                 >
                   {members.map((m) => (
                     <option key={m.id} value={m.id}>
@@ -470,7 +470,7 @@ export default function ScheduleClient({
                       recurrence: e.target.value as ScheduleEvent["recurrence"],
                     }))
                   }
-                  className="mt-1 w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-[16px] focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                  className="mt-1 w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-[16px] focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
                 >
                   <option value="none">なし</option>
                   <option value="weekly">毎週</option>
@@ -483,7 +483,7 @@ export default function ScheduleClient({
                   type="text"
                   value={form.memo}
                   onChange={(e) => setForm((f) => ({ ...f, memo: e.target.value }))}
-                  className="mt-1 w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-[16px] focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                  className="mt-1 w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-[16px] focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
                   placeholder="任意"
                 />
               </label>
@@ -509,7 +509,7 @@ export default function ScheduleClient({
               <button
                 type="submit"
                 disabled={saving}
-                className="flex-1 rounded-full bg-emerald-600 py-3 text-[15px] font-semibold text-white shadow-sm shadow-emerald-600/30 transition-transform active:scale-[0.98] disabled:opacity-60"
+                className="flex-1 rounded-full bg-amber-600 py-3 text-[15px] font-semibold text-white shadow-sm shadow-amber-600/30 transition-transform active:scale-[0.98] disabled:opacity-60"
               >
                 {saving ? "保存中…" : "保存"}
               </button>

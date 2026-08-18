@@ -124,7 +124,7 @@ export default function SettingsClient({
           onClick={() => setTab("members")}
           className={clsx(
             "flex-1 rounded-lg py-2 font-semibold transition-colors",
-            tab === "members" ? "bg-white text-emerald-700 shadow-sm" : "text-slate-500"
+            tab === "members" ? "bg-white text-amber-700 shadow-sm" : "text-slate-500"
           )}
         >
           メンバー
@@ -134,7 +134,7 @@ export default function SettingsClient({
           onClick={() => setTab("categories")}
           className={clsx(
             "flex-1 rounded-lg py-2 font-semibold transition-colors",
-            tab === "categories" ? "bg-white text-emerald-700 shadow-sm" : "text-slate-500"
+            tab === "categories" ? "bg-white text-amber-700 shadow-sm" : "text-slate-500"
           )}
         >
           カテゴリ
@@ -144,7 +144,7 @@ export default function SettingsClient({
           onClick={() => setTab("assets")}
           className={clsx(
             "flex-1 rounded-lg py-2 font-semibold transition-colors",
-            tab === "assets" ? "bg-white text-emerald-700 shadow-sm" : "text-slate-500"
+            tab === "assets" ? "bg-white text-amber-700 shadow-sm" : "text-slate-500"
           )}
         >
           資産口座
@@ -187,7 +187,7 @@ export default function SettingsClient({
               value={memberName}
               onChange={(e) => setMemberName(e.target.value)}
               placeholder="名前"
-              className="mb-3 w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-[16px] focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+              className="mb-3 w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-[16px] focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
             />
             <div className="mb-3 flex flex-wrap gap-2">
               {COLOR_OPTIONS.map((color) => (
@@ -205,7 +205,7 @@ export default function SettingsClient({
             </div>
             <button
               type="submit"
-              className="w-full rounded-full bg-emerald-600 py-2.5 text-[15px] font-semibold text-white shadow-sm shadow-emerald-600/30 transition-transform active:scale-[0.98]"
+              className="w-full rounded-full bg-amber-600 py-2.5 text-[15px] font-semibold text-white shadow-sm shadow-amber-600/30 transition-transform active:scale-[0.98]"
             >
               追加
             </button>
@@ -269,7 +269,7 @@ export default function SettingsClient({
               value={categoryName}
               onChange={(e) => setCategoryName(e.target.value)}
               placeholder="カテゴリ名"
-              className="mb-3 w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-[16px] focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+              className="mb-3 w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-[16px] focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
             />
             <div className="mb-3 flex gap-1 rounded-xl bg-slate-100 p-1">
               <button
@@ -313,7 +313,7 @@ export default function SettingsClient({
             </div>
             <button
               type="submit"
-              className="w-full rounded-full bg-emerald-600 py-2.5 text-[15px] font-semibold text-white shadow-sm shadow-emerald-600/30 transition-transform active:scale-[0.98]"
+              className="w-full rounded-full bg-amber-600 py-2.5 text-[15px] font-semibold text-white shadow-sm shadow-amber-600/30 transition-transform active:scale-[0.98]"
             >
               追加
             </button>
@@ -359,7 +359,7 @@ export default function SettingsClient({
               value={accountName}
               onChange={(e) => setAccountName(e.target.value)}
               placeholder="口座名（例: 普通預金（三井住友））"
-              className="mb-3 w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-[16px] focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+              className="mb-3 w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-[16px] focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
             />
             <div className="mb-3 flex gap-1 rounded-xl bg-slate-100 p-1">
               {ASSET_TYPES.map((t) => (
@@ -369,7 +369,7 @@ export default function SettingsClient({
                   onClick={() => setAccountType(t)}
                   className={clsx(
                     "flex-1 rounded-lg py-2 text-[13px] font-semibold transition-colors",
-                    accountType === t ? "bg-white text-emerald-700 shadow-sm" : "text-slate-500"
+                    accountType === t ? "bg-white text-amber-700 shadow-sm" : "text-slate-500"
                   )}
                 >
                   {ASSET_TYPE_LABEL[t]}
@@ -381,7 +381,7 @@ export default function SettingsClient({
               <select
                 value={accountMemberId}
                 onChange={(e) => setAccountMemberId(e.target.value)}
-                className="mt-1 w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-[16px] focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                className="mt-1 w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-[16px] focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
               >
                 <option value="">未設定</option>
                 {members.map((m) => (
@@ -393,7 +393,7 @@ export default function SettingsClient({
             </label>
             <button
               type="submit"
-              className="w-full rounded-full bg-emerald-600 py-2.5 text-[15px] font-semibold text-white shadow-sm shadow-emerald-600/30 transition-transform active:scale-[0.98]"
+              className="w-full rounded-full bg-amber-600 py-2.5 text-[15px] font-semibold text-white shadow-sm shadow-amber-600/30 transition-transform active:scale-[0.98]"
             >
               追加
             </button>
