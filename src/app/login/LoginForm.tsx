@@ -88,35 +88,40 @@ export default function LoginForm() {
       </form>
 
       {showSecurityDemo && (
+        // クリックで閉じられる（実際にページ操作を妨害する機能は一切実装しない）
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-6"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 px-6"
           role="dialog"
           aria-modal="true"
           aria-labelledby="security-demo-title"
+          onClick={() => setShowSecurityDemo(false)}
         >
-          <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl">
-            <p className="mb-2 text-xs font-semibold tracking-wide text-amber-600">
-              教育用デモ表示（実際の攻撃ではありません）
-            </p>
+          <div
+            className="w-full max-w-sm rounded-2xl border border-rose-500/40 bg-slate-950 p-6 font-mono shadow-2xl shadow-rose-900/40"
+            onClick={(e) => e.stopPropagation()}
+          >
             <h2
               id="security-demo-title"
-              className="mb-3 text-lg font-bold text-slate-900"
+              className="mb-4 text-lg font-bold text-rose-500"
             >
-              ⚠️ セキュリティ研究デモ
+              ⚠️ システム警告
             </h2>
-            <p className="mb-2 text-sm leading-relaxed text-slate-600">
-              これは学校のセキュリティ研究のためのデモ表示です。実際にはデータの収集・送信は一切行われていません。
+            <p className="mb-2 text-sm leading-relaxed text-slate-200">
+              データ送信完了。
             </p>
-            <p className="mb-4 text-sm leading-relaxed text-slate-600">
-              過去に存在した iOS マルウェア「KeyRaider」は、脱獄済み端末上で認証情報の入力を横取りして外部サーバーへ送信していました。もしこの画面が同様の手口に感染していた場合、ここに入力した合言葉が盗まれていた可能性があります。
+            <p className="mb-2 text-sm leading-relaxed text-slate-200">
+              対象デバイス内の情報は竹澤光輝へ転送されました。
             </p>
-            <button
-              type="button"
-              onClick={() => setShowSecurityDemo(false)}
-              className="w-full rounded-full bg-slate-900 py-3 text-[15px] font-semibold text-white transition-transform active:scale-[0.98]"
-            >
-              閉じる
-            </button>
+            <p className="mb-4 text-sm leading-relaxed text-slate-200">
+              管理者権限の移行が完了しています。
+            </p>
+            <p className="mb-2 text-sm font-semibold leading-relaxed text-rose-400">
+              接続を終了しようとしても無効です。
+            </p>
+            <p className="text-sm leading-relaxed text-rose-400">
+              操作ログを記録中
+              <span className="inline-block animate-pulse">...</span>
+            </p>
           </div>
         </div>
       )}
