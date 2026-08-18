@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import PageHeader from "@/components/PageHeader";
 import {
   Bar,
   BarChart,
@@ -172,7 +173,9 @@ export default function BudgetClient({
   const availableCategories = categories.filter((c) => c.type === form.type);
 
   return (
-    <div className="flex flex-col gap-6 pt-1">
+    <div className="flex flex-col gap-6">
+      <PageHeader title="家計簿" />
+
       <section className="flex items-center justify-between gap-2">
         <select
           value={month}

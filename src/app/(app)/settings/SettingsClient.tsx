@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import clsx from "clsx";
+import PageHeader from "@/components/PageHeader";
 import {
   type Member,
   type Category,
@@ -114,7 +115,9 @@ export default function SettingsClient({
   const incomeCategories = categories.filter((c) => c.type === "income");
 
   return (
-    <div className="flex flex-col gap-6 pt-1">
+    <div className="flex flex-col gap-6">
+      <PageHeader title="設定" />
+
       <div className="flex gap-1 rounded-xl bg-slate-100 p-1 text-[13px]">
         <button
           type="button"

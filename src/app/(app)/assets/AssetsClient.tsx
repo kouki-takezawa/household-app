@@ -14,6 +14,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import PageHeader from "@/components/PageHeader";
 import {
   type AssetAccount,
   type AssetSnapshot,
@@ -153,7 +154,9 @@ export default function AssetsClient({
   }
 
   return (
-    <div className="flex flex-col gap-6 pt-1">
+    <div className="flex flex-col gap-6">
+      <PageHeader title="資産管理" />
+
       <section>
         <h2 className="mb-2 px-1 text-[13px] font-semibold uppercase tracking-wide text-slate-400">
           資産総額

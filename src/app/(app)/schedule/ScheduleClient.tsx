@@ -20,6 +20,7 @@ import {
 } from "date-fns";
 import { ja } from "date-fns/locale";
 import clsx from "clsx";
+import PageHeader from "@/components/PageHeader";
 import {
   type Member,
   type ScheduleEvent,
@@ -201,7 +202,9 @@ export default function ScheduleClient({
   const selectedDayEvents = eventsByDay.get(selectedKey) ?? [];
 
   return (
-    <div className="flex flex-col gap-4 pt-1">
+    <div className="flex flex-col gap-4">
+      <PageHeader title="日程表" />
+
       <section className="flex items-center justify-between">
         <div className="flex items-center gap-1">
           <button
