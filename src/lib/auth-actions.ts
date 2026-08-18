@@ -13,7 +13,9 @@ export async function login(passcode: string): Promise<{ ok: boolean }> {
     httpOnly: true,
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
-    maxAge: 60 * 60 * 24 * 30,
+    // ログイン状態を保持しない：直後の画面遷移に必要な内部リクエストだけをカバーする
+    // ごく短い有効期限にし、ページ移動・リロードのたびに毎回ログインを求める。
+    maxAge: 5,
     path: "/",
   });
   return { ok: true };
