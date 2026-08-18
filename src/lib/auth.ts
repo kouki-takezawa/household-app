@@ -9,7 +9,7 @@ async function sha256Hex(text: string): Promise<string> {
 }
 
 function getPasscode(): string {
-  return process.env.APP_PASSCODE ?? "0315";
+  return process.env.APP_PASSCODE ?? "0607";
 }
 
 export function checkPasscode(input: string): boolean {
