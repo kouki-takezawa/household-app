@@ -9,6 +9,7 @@ import {
   formatEventSchedule,
 } from "@/lib/types";
 import { addEvent, editEvent, removeEvent } from "@/lib/actions";
+import { ColorAvatar } from "@/components/ColorAvatar";
 import { SlidePage } from "@/components/SlidePage";
 import { useToast } from "@/components/Toast";
 import { useConfirm } from "@/components/ConfirmDialog";
@@ -128,7 +129,7 @@ export default function EventDetailClient({
                     endDate: f.endDate < e.target.value ? e.target.value : f.endDate,
                   }))
                 }
-                className="mt-1 w-full rounded-xl border border-line bg-surface px-3 py-2.5 text-[16px] text-foreground focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
+                className="mt-1 w-full rounded-xl border border-line bg-surface px-3 py-2.5 text-[16px] text-foreground focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
               />
             </label>
             <label className="text-[12px] text-muted">
@@ -137,7 +138,7 @@ export default function EventDetailClient({
                 type="time"
                 value={form.startTime}
                 onChange={(e) => setForm((f) => ({ ...f, startTime: e.target.value }))}
-                className="mt-1 w-full rounded-xl border border-line bg-surface px-3 py-2.5 text-[16px] text-foreground focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
+                className="mt-1 w-full rounded-xl border border-line bg-surface px-3 py-2.5 text-[16px] text-foreground focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
               />
             </label>
           </div>
@@ -150,7 +151,7 @@ export default function EventDetailClient({
                 min={form.startDate}
                 value={form.endDate}
                 onChange={(e) => setForm((f) => ({ ...f, endDate: e.target.value }))}
-                className="mt-1 w-full rounded-xl border border-line bg-surface px-3 py-2.5 text-[16px] text-foreground focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
+                className="mt-1 w-full rounded-xl border border-line bg-surface px-3 py-2.5 text-[16px] text-foreground focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
               />
             </label>
             <label className="text-[12px] text-muted">
@@ -159,7 +160,7 @@ export default function EventDetailClient({
                 type="time"
                 value={form.endTime}
                 onChange={(e) => setForm((f) => ({ ...f, endTime: e.target.value }))}
-                className="mt-1 w-full rounded-xl border border-line bg-surface px-3 py-2.5 text-[16px] text-foreground focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
+                className="mt-1 w-full rounded-xl border border-line bg-surface px-3 py-2.5 text-[16px] text-foreground focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
               />
             </label>
           </div>
@@ -168,7 +169,7 @@ export default function EventDetailClient({
             <select
               value={form.memberId}
               onChange={(e) => setForm((f) => ({ ...f, memberId: e.target.value }))}
-              className="mt-1 w-full rounded-xl border border-line bg-surface px-3.5 py-2.5 text-[16px] text-foreground focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
+              className="mt-1 w-full rounded-xl border border-line bg-surface px-3.5 py-2.5 text-[16px] text-foreground focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
             >
               {members.map((m) => (
                 <option key={m.id} value={m.id}>
@@ -187,7 +188,7 @@ export default function EventDetailClient({
                   recurrence: e.target.value as "none" | "weekly" | "monthly",
                 }))
               }
-              className="mt-1 w-full rounded-xl border border-line bg-surface px-3.5 py-2.5 text-[16px] text-foreground focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
+              className="mt-1 w-full rounded-xl border border-line bg-surface px-3.5 py-2.5 text-[16px] text-foreground focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
             >
               <option value="none">なし</option>
               <option value="weekly">毎週</option>
@@ -200,7 +201,7 @@ export default function EventDetailClient({
               type="text"
               value={form.memo}
               onChange={(e) => setForm((f) => ({ ...f, memo: e.target.value }))}
-              className="mt-1 w-full rounded-xl border border-line bg-surface px-3.5 py-2.5 text-[16px] text-foreground focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
+              className="mt-1 w-full rounded-xl border border-line bg-surface px-3.5 py-2.5 text-[16px] text-foreground focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
               placeholder="任意"
             />
           </label>
@@ -215,7 +216,7 @@ export default function EventDetailClient({
             <button
               type="submit"
               disabled={saving}
-              className="flex-1 rounded-full bg-amber-600 py-3 text-[15px] font-semibold text-white shadow-sm shadow-amber-600/30 transition-transform active:scale-[0.98] disabled:opacity-60"
+              className="flex-1 rounded-full bg-brand py-3 text-[15px] font-semibold text-white shadow-sm shadow-brand/30 transition-transform active:scale-[0.98] disabled:opacity-60"
             >
               {saving ? "保存中…" : "保存"}
             </button>
@@ -228,12 +229,9 @@ export default function EventDetailClient({
   return (
     <SlidePage title="予定の詳細">
       <div className="flex flex-col gap-4 pt-2">
-        <div className="rounded-2xl bg-surface p-5 shadow-[0_2px_20px_-6px_rgba(120,90,40,0.14)] ring-1 ring-line-soft">
+        <div className="rounded-2xl bg-surface p-5 shadow-card ring-1 ring-line-soft">
           <div className="flex items-start gap-3">
-            <span
-              className="mt-1.5 h-3 w-3 flex-shrink-0 rounded-full"
-              style={{ backgroundColor: member?.color }}
-            />
+            <ColorAvatar label={member?.name ?? "?"} color={member?.color} />
             <div className="min-w-0">
               <h2 className="text-[19px] font-bold text-foreground">{event.title}</h2>
               <p className="mt-1 text-[14px] text-muted">{formatEventSchedule(event)}</p>

@@ -62,7 +62,7 @@ export function ConfirmProvider({ children }: { children: React.ReactNode }) {
                 className={`flex-1 rounded-full py-2.5 text-[14px] font-semibold text-white shadow-sm transition-transform active:scale-[0.98] ${
                   state.danger
                     ? "bg-rose-500 shadow-rose-500/30"
-                    : "bg-amber-600 shadow-amber-600/30"
+                    : "bg-brand shadow-brand/30"
                 }`}
               >
                 {state.confirmLabel ?? "削除"}

@@ -71,7 +71,7 @@ export default function LoginForm() {
         paddingBottom: "env(safe-area-inset-bottom)",
       }}
     >
-      <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-amber-600 text-3xl shadow-lg shadow-amber-600/30">
+      <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-brand text-3xl shadow-lg shadow-brand/30">
         🏡
       </div>
       <h1 className="mb-1 text-center text-xl font-bold text-foreground">
@@ -93,7 +93,7 @@ export default function LoginForm() {
           className={`w-full rounded-2xl border bg-surface px-4 py-3.5 text-center text-2xl tracking-[0.5em] text-foreground shadow-sm focus:outline-none focus:ring-2 ${
             error
               ? "border-rose-400 focus:ring-rose-400"
-              : "border-line focus:ring-amber-500"
+              : "border-line focus:ring-brand"
           }`}
           placeholder="••••"
         />
@@ -107,7 +107,7 @@ export default function LoginForm() {
         <button
           type="submit"
           disabled={pending || locked}
-          className="mt-4 w-full rounded-full bg-amber-600 py-3.5 text-[15px] font-semibold text-white shadow-sm shadow-amber-600/30 transition-transform active:scale-[0.98] active:bg-amber-700 disabled:opacity-60"
+          className="mt-4 w-full rounded-full bg-brand py-3.5 text-[15px] font-semibold text-white shadow-sm shadow-brand/30 transition-transform active:scale-[0.98] active:bg-brand-dark disabled:opacity-60"
         >
           {locked ? `${remainingSeconds}秒後に再試行` : pending ? "確認中…" : "ログイン"}
         </button>

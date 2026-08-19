@@ -45,7 +45,7 @@ export function GlobalSearch() {
           value={query}
           onChange={(e) => handleChange(e.target.value)}
           placeholder="家計簿・予定・資産記録を検索"
-          className="w-full rounded-full border border-line bg-surface py-2.5 pl-10 pr-4 text-[15px] text-foreground shadow-sm focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
+          className="w-full rounded-full border border-line bg-surface py-2.5 pl-10 pr-4 text-[15px] text-foreground shadow-sm focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
         />
       </div>
 
@@ -61,7 +61,7 @@ export function GlobalSearch() {
               <h3 className="mb-1.5 px-1 text-[12px] font-semibold uppercase tracking-wide text-muted">
                 家計簿
               </h3>
-              <div className="divide-y divide-line-soft rounded-2xl bg-surface shadow-[0_2px_20px_-6px_rgba(120,90,40,0.14)] ring-1 ring-line-soft">
+              <div className="divide-y divide-line-soft rounded-2xl bg-surface shadow-card ring-1 ring-line-soft">
                 {results.transactions.map((t) => (
                   <Link
                     key={t.id}
@@ -94,7 +94,7 @@ export function GlobalSearch() {
               <h3 className="mb-1.5 px-1 text-[12px] font-semibold uppercase tracking-wide text-muted">
                 予定
               </h3>
-              <div className="divide-y divide-line-soft rounded-2xl bg-surface shadow-[0_2px_20px_-6px_rgba(120,90,40,0.14)] ring-1 ring-line-soft">
+              <div className="divide-y divide-line-soft rounded-2xl bg-surface shadow-card ring-1 ring-line-soft">
                 {results.events.map((e) => (
                   <Link
                     key={e.id}
@@ -122,7 +122,7 @@ export function GlobalSearch() {
               <h3 className="mb-1.5 px-1 text-[12px] font-semibold uppercase tracking-wide text-muted">
                 資産記録
               </h3>
-              <div className="divide-y divide-line-soft rounded-2xl bg-surface shadow-[0_2px_20px_-6px_rgba(120,90,40,0.14)] ring-1 ring-line-soft">
+              <div className="divide-y divide-line-soft rounded-2xl bg-surface shadow-card ring-1 ring-line-soft">
                 {results.snapshots.map((s) => (
                   <Link
                     key={s.id}

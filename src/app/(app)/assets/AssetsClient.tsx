@@ -3,11 +3,11 @@
 import { useMemo } from "react";
 import Link from "next/link";
 import {
+  Area,
+  AreaChart,
   CartesianGrid,
   Cell,
   Legend,
-  Line,
-  LineChart,
   Pie,
   PieChart,
   ResponsiveContainer,
@@ -22,6 +22,7 @@ import {
   ASSET_TYPE_COLOR as TYPE_COLOR,
   formatYen,
 } from "@/lib/types";
+import { ColorAvatar } from "@/components/ColorAvatar";
 import { EmptyState } from "@/components/EmptyState";
 
 function latestSnapshot(snapshots: AssetSnapshot[], accountId: string) {
@@ -95,14 +96,14 @@ export default function AssetsClient({
         <h2 className="mb-2 px-1 text-[13px] font-semibold uppercase tracking-wide text-muted">
           資産総額
         </h2>
-        <div className="rounded-2xl bg-surface p-4 shadow-[0_2px_20px_-6px_rgba(120,90,40,0.14)] ring-1 ring-line-soft">
-          <p className="text-[26px] font-bold text-brand">{formatYen(total)}</p>
+        <div className="rounded-2xl bg-surface p-4 shadow-card ring-1 ring-line-soft">
+          <p className="text-[26px] font-bold tabular-nums text-brand">{formatYen(total)}</p>
           <p className="mt-1 text-[12px] text-muted">最新のスナップショット合計</p>
         </div>
       </section>
 
       {allocation.length > 0 && (
-        <section className="rounded-2xl bg-surface p-4 shadow-[0_2px_20px_-6px_rgba(120,90,40,0.14)] ring-1 ring-line-soft">
+        <section className="rounded-2xl bg-surface p-4 shadow-card ring-1 ring-line-soft">
           <h2 className="mb-2 text-[13px] font-semibold uppercase tracking-wide text-muted">
             資産配分
           </h2>
@@ -129,20 +130,33 @@ export default function AssetsClient({
         </section>
       )}
 
-      <section className="rounded-2xl bg-surface p-4 shadow-[0_2px_20px_-6px_rgba(120,90,40,0.14)] ring-1 ring-line-soft">
+      <section className="rounded-2xl bg-surface p-4 shadow-card ring-1 ring-line-soft">
         <h2 className="mb-2 text-[13px] font-semibold uppercase tracking-wide text-muted">
           資産推移
         </h2>
         <div className="h-56">
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={trend}>
+            <AreaChart data={trend}>
+              <defs>
+                <linearGradient id="assetsTotalGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="var(--brand)" stopOpacity={0.35} />
+                  <stop offset="100%" stopColor="var(--brand)" stopOpacity={0} />
+                </linearGradient>
+              </defs>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--line)" />
               <XAxis dataKey="date" fontSize={12} stroke="var(--muted)" />
               <YAxis fontSize={12} stroke="var(--muted)" tickFormatter={(v) => `${v / 10000}万`} />
               <Tooltip formatter={(v) => formatYen(Number(v ?? 0))} />
               <Legend />
-              <Line type="monotone" dataKey="資産合計" stroke="#d97706" strokeWidth={2.5} dot />
-            </LineChart>
+              <Area
+                type="monotone"
+                dataKey="資産合計"
+                stroke="var(--brand)"
+                strokeWidth={2.5}
+                fill="url(#assetsTotalGradient)"
+                dot={{ r: 3 }}
+              />
+            </AreaChart>
           </ResponsiveContainer>
         </div>
       </section>
@@ -151,17 +165,14 @@ export default function AssetsClient({
         <h2 className="mb-2 px-1 text-[13px] font-semibold uppercase tracking-wide text-muted">
           資産口座一覧
         </h2>
-        <div className="divide-y divide-line-soft rounded-2xl bg-surface shadow-[0_2px_20px_-6px_rgba(120,90,40,0.14)] ring-1 ring-line-soft">
+        <div className="divide-y divide-line-soft rounded-2xl bg-surface shadow-card ring-1 ring-line-soft">
           {latestByAccount.map(({ account, snapshot }) => (
             <Link
               key={account.id}
               href={`/assets/${account.id}`}
               className="flex items-center gap-3 p-3.5 active:bg-track"
             >
-              <span
-                className="h-2.5 w-2.5 flex-shrink-0 rounded-full"
-                style={{ backgroundColor: TYPE_COLOR[account.type] }}
-              />
+              <ColorAvatar label={account.name} color={TYPE_COLOR[account.type]} />
               <div className="min-w-0 flex-1">
                 <p className="truncate text-[15px] font-medium text-foreground">{account.name}</p>
                 <p className="text-[12px] text-muted">
@@ -169,7 +180,7 @@ export default function AssetsClient({
                   {snapshot ? ` ・ 最終更新 ${snapshot.date}` : " ・ 未記録"}
                 </p>
               </div>
-              <p className="text-[15px] font-semibold text-foreground">
+              <p className="text-[15px] font-semibold tabular-nums text-foreground">
                 {snapshot ? formatYen(snapshot.value) : "―"}
               </p>
               <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4 flex-shrink-0 text-muted">
@@ -184,7 +195,7 @@ export default function AssetsClient({
         <h2 className="mb-2 px-1 text-[13px] font-semibold uppercase tracking-wide text-muted">
           最近の記録
         </h2>
-        <div className="divide-y divide-line-soft rounded-2xl bg-surface shadow-[0_2px_20px_-6px_rgba(120,90,40,0.14)] ring-1 ring-line-soft">
+        <div className="divide-y divide-line-soft rounded-2xl bg-surface shadow-card ring-1 ring-line-soft">
           {history.length === 0 && (
             <EmptyState
               icon={
@@ -203,9 +214,9 @@ export default function AssetsClient({
                 href={`/assets/${s.assetAccountId}`}
                 className="flex items-center gap-3 p-3.5 active:bg-track"
               >
-                <span
-                  className="h-2.5 w-2.5 flex-shrink-0 rounded-full"
-                  style={{ backgroundColor: account ? TYPE_COLOR[account.type] : "#94a3b8" }}
+                <ColorAvatar
+                  label={account?.name ?? "?"}
+                  color={account ? TYPE_COLOR[account.type] : undefined}
                 />
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-[15px] font-medium text-foreground">
@@ -214,7 +225,7 @@ export default function AssetsClient({
                   </p>
                   <p className="text-[12px] text-muted">{s.date}</p>
                 </div>
-                <p className="text-[15px] font-semibold text-foreground">{formatYen(s.value)}</p>
+                <p className="text-[15px] font-semibold tabular-nums text-foreground">{formatYen(s.value)}</p>
               </Link>
             );
           })}
