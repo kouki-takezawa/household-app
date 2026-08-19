@@ -20,7 +20,6 @@ import {
 } from "date-fns";
 import { ja } from "date-fns/locale";
 import clsx from "clsx";
-import PageHeader from "@/components/PageHeader";
 import {
   type Member,
   type ScheduleEvent,
@@ -203,8 +202,6 @@ export default function ScheduleClient({
 
   return (
     <div className="flex flex-col gap-4">
-      <PageHeader title="日程表" />
-
       <section className="flex items-center justify-between">
         <div className="flex items-center gap-1">
           <button
@@ -274,7 +271,7 @@ export default function ScheduleClient({
         ))}
       </section>
 
-      <section className="rounded-2xl bg-white p-3 shadow-sm ring-1 ring-slate-900/5">
+      <section className="rounded-2xl bg-white p-3 shadow-[0_2px_20px_-6px_rgba(120,90,40,0.14)] ring-1 ring-black/[0.03]">
         <div className="grid grid-cols-7 gap-1 text-center text-[11px] text-slate-400">
           {WEEKDAYS.map((w) => (
             <div key={w} className="py-1">
@@ -336,7 +333,7 @@ export default function ScheduleClient({
             ＋ 予定を追加
           </button>
         </div>
-        <div className="divide-y divide-slate-100 rounded-2xl bg-white shadow-sm ring-1 ring-slate-900/5">
+        <div className="divide-y divide-slate-100 rounded-2xl bg-white shadow-[0_2px_20px_-6px_rgba(120,90,40,0.14)] ring-1 ring-black/[0.03]">
           {selectedDayEvents.length === 0 && (
             <p className="p-4 text-[13px] text-slate-400">予定はありません</p>
           )}

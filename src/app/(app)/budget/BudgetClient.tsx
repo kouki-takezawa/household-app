@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import PageHeader from "@/components/PageHeader";
 import {
   Bar,
   BarChart,
@@ -204,8 +203,6 @@ export default function BudgetClient({
 
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader title="家計簿" />
-
       <section className="flex flex-col gap-2.5">
         <div className="flex w-fit gap-1 rounded-xl bg-slate-100 p-1 text-[13px]">
           <button
@@ -265,22 +262,22 @@ export default function BudgetClient({
       </section>
 
       <section className="grid grid-cols-3 gap-2.5">
-        <div className="rounded-2xl bg-white p-3.5 shadow-sm ring-1 ring-slate-900/5">
+        <div className="rounded-2xl bg-white p-3.5 shadow-[0_2px_20px_-6px_rgba(120,90,40,0.14)] ring-1 ring-black/[0.03]">
           <p className="text-[11px] text-slate-400">収入</p>
           <p className="mt-1 text-[16px] font-bold text-emerald-600">{formatYen(income)}</p>
         </div>
-        <div className="rounded-2xl bg-white p-3.5 shadow-sm ring-1 ring-slate-900/5">
+        <div className="rounded-2xl bg-white p-3.5 shadow-[0_2px_20px_-6px_rgba(120,90,40,0.14)] ring-1 ring-black/[0.03]">
           <p className="text-[11px] text-slate-400">支出</p>
           <p className="mt-1 text-[16px] font-bold text-rose-500">{formatYen(expense)}</p>
         </div>
-        <div className="rounded-2xl bg-white p-3.5 shadow-sm ring-1 ring-slate-900/5">
+        <div className="rounded-2xl bg-white p-3.5 shadow-[0_2px_20px_-6px_rgba(120,90,40,0.14)] ring-1 ring-black/[0.03]">
           <p className="text-[11px] text-slate-400">差引</p>
           <p className="mt-1 text-[16px] font-bold text-slate-900">{formatYen(income - expense)}</p>
         </div>
       </section>
 
       {categoryBreakdown.length > 0 && (
-        <section className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-900/5">
+        <section className="rounded-2xl bg-white p-4 shadow-[0_2px_20px_-6px_rgba(120,90,40,0.14)] ring-1 ring-black/[0.03]">
           <h2 className="mb-2 text-[13px] font-semibold uppercase tracking-wide text-slate-400">
             カテゴリ別支出
           </h2>
@@ -307,7 +304,7 @@ export default function BudgetClient({
         </section>
       )}
 
-      <section className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-900/5">
+      <section className="rounded-2xl bg-white p-4 shadow-[0_2px_20px_-6px_rgba(120,90,40,0.14)] ring-1 ring-black/[0.03]">
         <h2 className="mb-2 text-[13px] font-semibold uppercase tracking-wide text-slate-400">
           {periodMode === "month" ? "月別推移（直近6ヶ月）" : "年別推移"}
         </h2>
@@ -361,7 +358,7 @@ export default function BudgetClient({
             </button>
           )}
         </div>
-        <div className="divide-y divide-slate-100 rounded-2xl bg-white shadow-sm ring-1 ring-slate-900/5">
+        <div className="divide-y divide-slate-100 rounded-2xl bg-white shadow-[0_2px_20px_-6px_rgba(120,90,40,0.14)] ring-1 ring-black/[0.03]">
           {visibleTx.length === 0 && (
             <p className="p-4 text-[13px] text-slate-400">
               {isSearching ? "該当する記録が見つかりません" : "この期間の記録はありません"}

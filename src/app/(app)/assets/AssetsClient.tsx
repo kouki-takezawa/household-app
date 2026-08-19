@@ -14,7 +14,6 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import PageHeader from "@/components/PageHeader";
 import {
   type AssetAccount,
   type AssetSnapshot,
@@ -155,20 +154,18 @@ export default function AssetsClient({
 
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader title="資産管理" />
-
       <section>
         <h2 className="mb-2 px-1 text-[13px] font-semibold uppercase tracking-wide text-slate-400">
           資産総額
         </h2>
-        <div className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-900/5">
+        <div className="rounded-2xl bg-white p-4 shadow-[0_2px_20px_-6px_rgba(120,90,40,0.14)] ring-1 ring-black/[0.03]">
           <p className="text-[26px] font-bold text-amber-700">{formatYen(total)}</p>
           <p className="mt-1 text-[12px] text-slate-400">最新のスナップショット合計</p>
         </div>
       </section>
 
       {allocation.length > 0 && (
-        <section className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-900/5">
+        <section className="rounded-2xl bg-white p-4 shadow-[0_2px_20px_-6px_rgba(120,90,40,0.14)] ring-1 ring-black/[0.03]">
           <h2 className="mb-2 text-[13px] font-semibold uppercase tracking-wide text-slate-400">
             資産配分
           </h2>
@@ -195,7 +192,7 @@ export default function AssetsClient({
         </section>
       )}
 
-      <section className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-900/5">
+      <section className="rounded-2xl bg-white p-4 shadow-[0_2px_20px_-6px_rgba(120,90,40,0.14)] ring-1 ring-black/[0.03]">
         <h2 className="mb-2 text-[13px] font-semibold uppercase tracking-wide text-slate-400">
           資産推移
         </h2>
@@ -217,7 +214,7 @@ export default function AssetsClient({
         <h2 className="mb-2 px-1 text-[13px] font-semibold uppercase tracking-wide text-slate-400">
           資産口座一覧
         </h2>
-        <div className="divide-y divide-slate-100 rounded-2xl bg-white shadow-sm ring-1 ring-slate-900/5">
+        <div className="divide-y divide-slate-100 rounded-2xl bg-white shadow-[0_2px_20px_-6px_rgba(120,90,40,0.14)] ring-1 ring-black/[0.03]">
           {latestByAccount.map(({ account, snapshot }) => (
             <div key={account.id} className="flex items-center gap-3 p-3.5">
               <span
@@ -250,7 +247,7 @@ export default function AssetsClient({
         <h2 className="mb-2 px-1 text-[13px] font-semibold uppercase tracking-wide text-slate-400">
           記録履歴
         </h2>
-        <div className="divide-y divide-slate-100 rounded-2xl bg-white shadow-sm ring-1 ring-slate-900/5">
+        <div className="divide-y divide-slate-100 rounded-2xl bg-white shadow-[0_2px_20px_-6px_rgba(120,90,40,0.14)] ring-1 ring-black/[0.03]">
           {history.length === 0 && (
             <p className="p-4 text-[13px] text-slate-400">記録はまだありません</p>
           )}
