@@ -5,12 +5,39 @@
   --foreground: #1c1c1e;
   --brand: #d97706;
   --brand-dark: #b45309;
+  --surface: #ffffff;
+  --muted: #94a3b8;
+  --subtle: #64748b;
+  --line: #e2e8f0;
+  --line-soft: #f1f5f9;
+  --track: #f1f5f9;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #17130f;
+    --foreground: #f2e9db;
+    --brand: #e6912a;
+    --brand-dark: #f3a53f;
+    --surface: #241e17;
+    --muted: #8d7c68;
+    --subtle: #b8a891;
+    --line: #382f24;
+    --line-soft: #2a2319;
+    --track: #2a2319;
+  }
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-brand: var(--brand);
+  --color-surface: var(--surface);
+  --color-muted: var(--muted);
+  --color-subtle: var(--subtle);
+  --color-line: var(--line);
+  --color-line-soft: var(--line-soft);
+  --color-track: var(--track);
   --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Hiragino Sans",
     "Hiragino Kaku Gothic ProN", "Segoe UI", Roboto, ui-sans-serif, system-ui,
     sans-serif;
@@ -35,4 +62,24 @@ textarea {
 
 * {
   -webkit-font-smoothing: antialiased;
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes slide-in-right {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
 }

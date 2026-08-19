@@ -15,7 +15,9 @@ function revalidateAll() {
   revalidatePath("/");
   revalidatePath("/budget");
   revalidatePath("/schedule");
+  revalidatePath("/schedule/[id]", "page");
   revalidatePath("/assets");
+  revalidatePath("/assets/[id]", "page");
   revalidatePath("/settings");
 }
 

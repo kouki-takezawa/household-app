@@ -24,6 +24,8 @@ import {
   todayStr,
 } from "@/lib/types";
 import { addTransaction, editTransaction, removeTransaction } from "@/lib/actions";
+import { EmptyState } from "@/components/EmptyState";
+import { useToast } from "@/components/Toast";
 
 function monthOptions(txs: Transaction[], defaultMonth: string): string[] {
   const set = new Set(txs.map((t) => t.date.slice(0, 7)));
@@ -60,6 +62,7 @@ export default function BudgetClient({
   const today = todayStr();
   const defaultMonth = today.slice(0, 7);
   const defaultYear = today.slice(0, 4);
+  const showToast = useToast();
 
   const [transactions, setTransactions] = useState<Transaction[]>(initialTransactions);
   const [periodMode, setPeriodMode] = useState<"month" | "year">("month");
@@ -107,11 +110,15 @@ export default function BudgetClient({
       if (t.type !== "expense") continue;
       map.set(t.categoryId, (map.get(t.categoryId) ?? 0) + t.amount);
     }
-    return [...map.entries()].map(([categoryId, value]) => ({
-      name: findCategoryById(categories, categoryId)?.name ?? "その他",
-      value,
-      color: findCategoryById(categories, categoryId)?.color ?? "#94a3b8",
-    }));
+    const total = [...map.values()].reduce((s, v) => s + v, 0);
+    return [...map.entries()]
+      .map(([categoryId, value]) => ({
+        name: findCategoryById(categories, categoryId)?.name ?? "その他",
+        value,
+        color: findCategoryById(categories, categoryId)?.color ?? "#94a3b8",
+        percent: total > 0 ? (value / total) * 100 : 0,
+      }))
+      .sort((a, b) => b.value - a.value);
   }, [periodTx, categories]);
 
   const monthlyTrend = useMemo(() => {
@@ -162,6 +169,7 @@ export default function BudgetClient({
     if (!confirm("この記録を削除しますか？")) return;
     setTransactions((prev) => prev.filter((t) => t.id !== id));
     await removeTransaction(id);
+    showToast("削除しました");
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -197,6 +205,7 @@ export default function BudgetClient({
     }
     setSaving(false);
     setShowForm(false);
+    showToast(editingId ? "更新しました" : "保存しました");
   }
 
   const availableCategories = categories.filter((c) => c.type === form.type);
@@ -204,12 +213,12 @@ export default function BudgetClient({
   return (
     <div className="flex flex-col gap-6">
       <section className="flex flex-col gap-2.5">
-        <div className="flex w-fit gap-1 rounded-xl bg-slate-100 p-1 text-[13px]">
+        <div className="flex w-fit gap-1 rounded-xl bg-track p-1 text-[13px]">
           <button
             type="button"
             onClick={() => setPeriodMode("month")}
             className={`rounded-lg px-3 py-1.5 font-semibold transition-colors ${
-              periodMode === "month" ? "bg-white text-amber-700 shadow-sm" : "text-slate-500"
+              periodMode === "month" ? "bg-surface text-brand shadow-sm" : "text-subtle"
             }`}
           >
             月次
@@ -218,7 +227,7 @@ export default function BudgetClient({
             type="button"
             onClick={() => setPeriodMode("year")}
             className={`rounded-lg px-3 py-1.5 font-semibold transition-colors ${
-              periodMode === "year" ? "bg-white text-amber-700 shadow-sm" : "text-slate-500"
+              periodMode === "year" ? "bg-surface text-brand shadow-sm" : "text-subtle"
             }`}
           >
             年次
@@ -230,7 +239,7 @@ export default function BudgetClient({
             <select
               value={month}
               onChange={(e) => setMonth(e.target.value)}
-              className="rounded-full border border-slate-200 bg-white px-4 py-2 text-[15px] font-medium text-slate-700 shadow-sm"
+              className="rounded-full border border-line bg-surface px-4 py-2 text-[15px] font-medium text-foreground shadow-sm"
             >
               {months.map((m) => (
                 <option key={m} value={m}>
@@ -242,7 +251,7 @@ export default function BudgetClient({
             <select
               value={year}
               onChange={(e) => setYear(e.target.value)}
-              className="rounded-full border border-slate-200 bg-white px-4 py-2 text-[15px] font-medium text-slate-700 shadow-sm"
+              className="rounded-full border border-line bg-surface px-4 py-2 text-[15px] font-medium text-foreground shadow-sm"
             >
               {years.map((y) => (
                 <option key={y} value={y}>
@@ -262,23 +271,23 @@ export default function BudgetClient({
       </section>
 
       <section className="grid grid-cols-3 gap-2.5">
-        <div className="rounded-2xl bg-white p-3.5 shadow-[0_2px_20px_-6px_rgba(120,90,40,0.14)] ring-1 ring-black/[0.03]">
-          <p className="text-[11px] text-slate-400">収入</p>
+        <div className="rounded-2xl bg-surface p-3.5 shadow-[0_2px_20px_-6px_rgba(120,90,40,0.14)] ring-1 ring-line-soft">
+          <p className="text-[11px] text-muted">収入</p>
           <p className="mt-1 text-[16px] font-bold text-emerald-600">{formatYen(income)}</p>
         </div>
-        <div className="rounded-2xl bg-white p-3.5 shadow-[0_2px_20px_-6px_rgba(120,90,40,0.14)] ring-1 ring-black/[0.03]">
-          <p className="text-[11px] text-slate-400">支出</p>
+        <div className="rounded-2xl bg-surface p-3.5 shadow-[0_2px_20px_-6px_rgba(120,90,40,0.14)] ring-1 ring-line-soft">
+          <p className="text-[11px] text-muted">支出</p>
           <p className="mt-1 text-[16px] font-bold text-rose-500">{formatYen(expense)}</p>
         </div>
-        <div className="rounded-2xl bg-white p-3.5 shadow-[0_2px_20px_-6px_rgba(120,90,40,0.14)] ring-1 ring-black/[0.03]">
-          <p className="text-[11px] text-slate-400">差引</p>
-          <p className="mt-1 text-[16px] font-bold text-slate-900">{formatYen(income - expense)}</p>
+        <div className="rounded-2xl bg-surface p-3.5 shadow-[0_2px_20px_-6px_rgba(120,90,40,0.14)] ring-1 ring-line-soft">
+          <p className="text-[11px] text-muted">差引</p>
+          <p className="mt-1 text-[16px] font-bold text-foreground">{formatYen(income - expense)}</p>
         </div>
       </section>
 
       {categoryBreakdown.length > 0 && (
-        <section className="rounded-2xl bg-white p-4 shadow-[0_2px_20px_-6px_rgba(120,90,40,0.14)] ring-1 ring-black/[0.03]">
-          <h2 className="mb-2 text-[13px] font-semibold uppercase tracking-wide text-slate-400">
+        <section className="rounded-2xl bg-surface p-4 shadow-[0_2px_20px_-6px_rgba(120,90,40,0.14)] ring-1 ring-line-soft">
+          <h2 className="mb-2 text-[13px] font-semibold uppercase tracking-wide text-muted">
             カテゴリ別支出
           </h2>
           <div className="h-56">
@@ -301,19 +310,37 @@ export default function BudgetClient({
               </PieChart>
             </ResponsiveContainer>
           </div>
+          <div className="mt-3 flex flex-col gap-2.5">
+            {categoryBreakdown.map((c) => (
+              <div key={c.name} className="flex items-center gap-3">
+                <p className="w-20 flex-shrink-0 truncate text-[12px] text-foreground">
+                  {c.name}
+                </p>
+                <div className="h-2 flex-1 overflow-hidden rounded-full bg-track">
+                  <div
+                    className="h-full rounded-full transition-all"
+                    style={{ width: `${c.percent}%`, backgroundColor: c.color }}
+                  />
+                </div>
+                <p className="w-11 flex-shrink-0 text-right text-[12px] tabular-nums text-muted">
+                  {c.percent.toFixed(0)}%
+                </p>
+              </div>
+            ))}
+          </div>
         </section>
       )}
 
-      <section className="rounded-2xl bg-white p-4 shadow-[0_2px_20px_-6px_rgba(120,90,40,0.14)] ring-1 ring-black/[0.03]">
-        <h2 className="mb-2 text-[13px] font-semibold uppercase tracking-wide text-slate-400">
+      <section className="rounded-2xl bg-surface p-4 shadow-[0_2px_20px_-6px_rgba(120,90,40,0.14)] ring-1 ring-line-soft">
+        <h2 className="mb-2 text-[13px] font-semibold uppercase tracking-wide text-muted">
           {periodMode === "month" ? "月別推移（直近6ヶ月）" : "年別推移"}
         </h2>
         <div className="h-56">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={trend}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-              <XAxis dataKey="label" fontSize={12} stroke="#94a3b8" />
-              <YAxis fontSize={12} stroke="#94a3b8" tickFormatter={(v) => `${v / 10000}万`} />
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--line)" />
+              <XAxis dataKey="label" fontSize={12} stroke="var(--muted)" />
+              <YAxis fontSize={12} stroke="var(--muted)" tickFormatter={(v) => `${v / 10000}万`} />
               <Tooltip formatter={(v) => formatYen(Number(v ?? 0))} />
               <Legend />
               <Bar dataKey="収入" fill="#10b981" radius={[4, 4, 0, 0]} />
@@ -325,13 +352,13 @@ export default function BudgetClient({
 
       <section>
         <div className="mb-2 flex items-center justify-between px-1">
-          <h2 className="text-[13px] font-semibold uppercase tracking-wide text-slate-400">
+          <h2 className="text-[13px] font-semibold uppercase tracking-wide text-muted">
             {isSearching ? "検索結果" : "明細一覧"}
           </h2>
         </div>
         <div className="relative mb-2">
           <svg
-            className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
+            className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted"
             viewBox="0 0 20 20"
             fill="none"
             stroke="currentColor"
@@ -345,24 +372,30 @@ export default function BudgetClient({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="カテゴリ・メモで検索（全期間）"
-            className="w-full rounded-full border border-slate-200 bg-white py-2.5 pl-10 pr-9 text-[15px] shadow-sm focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
+            className="w-full rounded-full border border-line bg-surface py-2.5 pl-10 pr-9 text-[15px] text-foreground shadow-sm focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
           />
           {searchQuery && (
             <button
               type="button"
               onClick={() => setSearchQuery("")}
-              className="absolute right-3 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full bg-slate-200 text-[11px] text-slate-600 active:bg-slate-300"
+              className="absolute right-3 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full bg-track text-[11px] text-subtle active:opacity-70"
               aria-label="検索をクリア"
             >
               ✕
             </button>
           )}
         </div>
-        <div className="divide-y divide-slate-100 rounded-2xl bg-white shadow-[0_2px_20px_-6px_rgba(120,90,40,0.14)] ring-1 ring-black/[0.03]">
+        <div className="divide-y divide-line-soft rounded-2xl bg-surface shadow-[0_2px_20px_-6px_rgba(120,90,40,0.14)] ring-1 ring-line-soft">
           {visibleTx.length === 0 && (
-            <p className="p-4 text-[13px] text-slate-400">
-              {isSearching ? "該当する記録が見つかりません" : "この期間の記録はありません"}
-            </p>
+            <EmptyState
+              icon={
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-5 w-5">
+                  <rect x="3.5" y="6" width="17" height="12" rx="2.5" />
+                  <path d="M3.5 10h17" />
+                </svg>
+              }
+              message={isSearching ? "該当する記録が見つかりません" : "この期間の記録はありません"}
+            />
           )}
           {visibleTx.map((t) => {
             const category = findCategoryById(categories, t.categoryId);
@@ -374,11 +407,11 @@ export default function BudgetClient({
                   style={{ backgroundColor: category?.color }}
                 />
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-[15px] font-medium text-slate-800">
+                  <p className="truncate text-[15px] font-medium text-foreground">
                     {category?.name}
                     {t.memo ? ` ・ ${t.memo}` : ""}
                   </p>
-                  <p className="text-[12px] text-slate-400">
+                  <p className="text-[12px] text-muted">
                     {t.date}
                     {member ? ` ・ ${member.name}` : ""}
                   </p>
@@ -394,14 +427,14 @@ export default function BudgetClient({
                 <button
                   type="button"
                   onClick={() => openEditForm(t)}
-                  className="rounded-full px-2.5 py-1.5 text-[12px] text-slate-500 active:bg-slate-100"
+                  className="rounded-full px-2.5 py-1.5 text-[12px] text-subtle active:opacity-70"
                 >
                   編集
                 </button>
                 <button
                   type="button"
                   onClick={() => handleDelete(t.id)}
-                  className="rounded-full px-2.5 py-1.5 text-[12px] text-rose-500 active:bg-rose-50"
+                  className="rounded-full px-2.5 py-1.5 text-[12px] text-rose-500 active:bg-rose-500/10"
                 >
                   削除
                 </button>
@@ -415,15 +448,15 @@ export default function BudgetClient({
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 sm:items-center">
           <form
             onSubmit={handleSubmit}
-            className="w-full max-w-sm rounded-t-3xl bg-white px-5 pt-3 shadow-xl sm:rounded-3xl sm:pt-5"
+            className="w-full max-w-sm rounded-t-3xl bg-surface px-5 pt-3 shadow-xl sm:rounded-3xl sm:pt-5"
             style={{ paddingBottom: "calc(1.5rem + env(safe-area-inset-bottom))" }}
           >
-            <div className="mx-auto mb-3 h-1.5 w-10 rounded-full bg-slate-300 sm:hidden" />
-            <h3 className="mb-4 text-[17px] font-bold text-slate-900">
+            <div className="mx-auto mb-3 h-1.5 w-10 rounded-full bg-line sm:hidden" />
+            <h3 className="mb-4 text-[17px] font-bold text-foreground">
               {editingId ? "収支を編集" : "収支を記録"}
             </h3>
             <div className="flex flex-col gap-3">
-              <div className="flex gap-1 rounded-xl bg-slate-100 p-1">
+              <div className="flex gap-1 rounded-xl bg-track p-1">
                 <button
                   type="button"
                   onClick={() =>
@@ -435,8 +468,8 @@ export default function BudgetClient({
                   }
                   className={`flex-1 rounded-lg py-2 text-[14px] font-semibold transition-colors ${
                     form.type === "expense"
-                      ? "bg-white text-rose-500 shadow-sm"
-                      : "text-slate-500"
+                      ? "bg-surface text-rose-500 shadow-sm"
+                      : "text-subtle"
                   }`}
                 >
                   支出
@@ -452,26 +485,26 @@ export default function BudgetClient({
                   }
                   className={`flex-1 rounded-lg py-2 text-[14px] font-semibold transition-colors ${
                     form.type === "income"
-                      ? "bg-white text-emerald-600 shadow-sm"
-                      : "text-slate-500"
+                      ? "bg-surface text-emerald-600 shadow-sm"
+                      : "text-subtle"
                   }`}
                 >
                   収入
                 </button>
               </div>
 
-              <label className="text-[12px] text-slate-400">
+              <label className="text-[12px] text-muted">
                 日付
                 <input
                   type="date"
                   required
                   value={form.date}
                   onChange={(e) => setForm((f) => ({ ...f, date: e.target.value }))}
-                  className="mt-1 w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-[16px] focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
+                  className="mt-1 w-full rounded-xl border border-line bg-surface px-3.5 py-2.5 text-[16px] text-foreground focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
                 />
               </label>
 
-              <label className="text-[12px] text-slate-400">
+              <label className="text-[12px] text-muted">
                 金額
                 <input
                   type="number"
@@ -479,17 +512,17 @@ export default function BudgetClient({
                   min={1}
                   value={form.amount}
                   onChange={(e) => setForm((f) => ({ ...f, amount: e.target.value }))}
-                  className="mt-1 w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-[16px] focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
+                  className="mt-1 w-full rounded-xl border border-line bg-surface px-3.5 py-2.5 text-[16px] text-foreground focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
                   placeholder="0"
                 />
               </label>
 
-              <label className="text-[12px] text-slate-400">
+              <label className="text-[12px] text-muted">
                 カテゴリ
                 <select
                   value={form.categoryId}
                   onChange={(e) => setForm((f) => ({ ...f, categoryId: e.target.value }))}
-                  className="mt-1 w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-[16px] focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
+                  className="mt-1 w-full rounded-xl border border-line bg-surface px-3.5 py-2.5 text-[16px] text-foreground focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
                 >
                   {availableCategories.map((c) => (
                     <option key={c.id} value={c.id}>
@@ -499,12 +532,12 @@ export default function BudgetClient({
                 </select>
               </label>
 
-              <label className="text-[12px] text-slate-400">
+              <label className="text-[12px] text-muted">
                 記録者
                 <select
                   value={form.memberId}
                   onChange={(e) => setForm((f) => ({ ...f, memberId: e.target.value }))}
-                  className="mt-1 w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-[16px] focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
+                  className="mt-1 w-full rounded-xl border border-line bg-surface px-3.5 py-2.5 text-[16px] text-foreground focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
                 >
                   {members.map((m) => (
                     <option key={m.id} value={m.id}>
@@ -514,13 +547,13 @@ export default function BudgetClient({
                 </select>
               </label>
 
-              <label className="text-[12px] text-slate-400">
+              <label className="text-[12px] text-muted">
                 メモ
                 <input
                   type="text"
                   value={form.memo}
                   onChange={(e) => setForm((f) => ({ ...f, memo: e.target.value }))}
-                  className="mt-1 w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-[16px] focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
+                  className="mt-1 w-full rounded-xl border border-line bg-surface px-3.5 py-2.5 text-[16px] text-foreground focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
                   placeholder="任意"
                 />
               </label>
@@ -530,7 +563,7 @@ export default function BudgetClient({
               <button
                 type="button"
                 onClick={() => setShowForm(false)}
-                className="flex-1 rounded-full border border-slate-200 py-3 text-[15px] font-semibold text-slate-600 active:bg-slate-50"
+                className="flex-1 rounded-full border border-line py-3 text-[15px] font-semibold text-subtle active:opacity-70"
               >
                 キャンセル
               </button>
