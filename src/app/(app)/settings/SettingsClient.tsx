@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import clsx from "clsx";
-import PageHeader from "@/components/PageHeader";
 import {
   type Member,
   type Category,
@@ -116,8 +115,6 @@ export default function SettingsClient({
 
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader title="設定" />
-
       <div className="flex gap-1 rounded-xl bg-slate-100 p-1 text-[13px]">
         <button
           type="button"
@@ -157,7 +154,7 @@ export default function SettingsClient({
             <p className="mb-2 px-1 text-[12px] text-slate-400">
               日程表の色分け・フィルターに使うメンバーです。
             </p>
-            <div className="divide-y divide-slate-100 rounded-2xl bg-white shadow-sm ring-1 ring-slate-900/5">
+            <div className="divide-y divide-slate-100 rounded-2xl bg-white shadow-[0_2px_20px_-6px_rgba(120,90,40,0.14)] ring-1 ring-black/[0.03]">
               {members.map((m) => (
                 <div key={m.id} className="flex items-center gap-3 p-3.5">
                   <span
@@ -179,7 +176,7 @@ export default function SettingsClient({
 
           <form
             onSubmit={addMember}
-            className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-900/5"
+            className="rounded-2xl bg-white p-4 shadow-[0_2px_20px_-6px_rgba(120,90,40,0.14)] ring-1 ring-black/[0.03]"
           >
             <h3 className="mb-3 text-[15px] font-semibold text-slate-700">メンバーを追加</h3>
             <input
@@ -217,7 +214,7 @@ export default function SettingsClient({
         <>
           <section>
             <p className="mb-2 px-1 text-[12px] text-slate-400">支出カテゴリ</p>
-            <div className="divide-y divide-slate-100 rounded-2xl bg-white shadow-sm ring-1 ring-slate-900/5">
+            <div className="divide-y divide-slate-100 rounded-2xl bg-white shadow-[0_2px_20px_-6px_rgba(120,90,40,0.14)] ring-1 ring-black/[0.03]">
               {expenseCategories.map((c) => (
                 <div key={c.id} className="flex items-center gap-3 p-3.5">
                   <span
@@ -239,7 +236,7 @@ export default function SettingsClient({
 
           <section>
             <p className="mb-2 px-1 text-[12px] text-slate-400">収入カテゴリ</p>
-            <div className="divide-y divide-slate-100 rounded-2xl bg-white shadow-sm ring-1 ring-slate-900/5">
+            <div className="divide-y divide-slate-100 rounded-2xl bg-white shadow-[0_2px_20px_-6px_rgba(120,90,40,0.14)] ring-1 ring-black/[0.03]">
               {incomeCategories.map((c) => (
                 <div key={c.id} className="flex items-center gap-3 p-3.5">
                   <span
@@ -261,7 +258,7 @@ export default function SettingsClient({
 
           <form
             onSubmit={addCategory}
-            className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-900/5"
+            className="rounded-2xl bg-white p-4 shadow-[0_2px_20px_-6px_rgba(120,90,40,0.14)] ring-1 ring-black/[0.03]"
           >
             <h3 className="mb-3 text-[15px] font-semibold text-slate-700">カテゴリを追加</h3>
             <input
@@ -327,7 +324,7 @@ export default function SettingsClient({
             <p className="mb-2 px-1 text-[12px] text-slate-400">
               資産管理画面の「資産口座一覧」に表示される口座です。
             </p>
-            <div className="divide-y divide-slate-100 rounded-2xl bg-white shadow-sm ring-1 ring-slate-900/5">
+            <div className="divide-y divide-slate-100 rounded-2xl bg-white shadow-[0_2px_20px_-6px_rgba(120,90,40,0.14)] ring-1 ring-black/[0.03]">
               {assetAccounts.length === 0 && (
                 <p className="p-4 text-[13px] text-slate-400">資産口座がありません</p>
               )}
@@ -351,7 +348,7 @@ export default function SettingsClient({
 
           <form
             onSubmit={addAssetAccount}
-            className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-900/5"
+            className="rounded-2xl bg-white p-4 shadow-[0_2px_20px_-6px_rgba(120,90,40,0.14)] ring-1 ring-black/[0.03]"
           >
             <h3 className="mb-3 text-[15px] font-semibold text-slate-700">資産口座を追加</h3>
             <input

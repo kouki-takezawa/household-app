@@ -1,7 +1,4 @@
 import Link from "next/link";
-import { format, parseISO } from "date-fns";
-import { ja } from "date-fns/locale";
-import PageHeader from "@/components/PageHeader";
 import {
   getTransactions,
   getEvents,
@@ -70,29 +67,24 @@ export default async function HomePage() {
 
   return (
     <div className="flex flex-col gap-7">
-      <PageHeader
-        title="ホーム"
-        subtitle={format(parseISO(today), "M月d日(E)", { locale: ja })}
-      />
-
       <section>
         <h2 className="mb-2 px-1 text-[13px] font-semibold uppercase tracking-wide text-slate-400">
           今月の収支（{currentMonth}）
         </h2>
         <div className="grid grid-cols-3 gap-2.5">
-          <div className="rounded-2xl bg-white p-3.5 shadow-sm ring-1 ring-slate-900/5">
+          <div className="rounded-2xl bg-white p-3.5 shadow-[0_2px_20px_-6px_rgba(120,90,40,0.14)] ring-1 ring-black/[0.03]">
             <p className="text-[11px] text-slate-400">収入</p>
             <p className="mt-1 text-[17px] font-bold text-emerald-600">
               {formatYen(income)}
             </p>
           </div>
-          <div className="rounded-2xl bg-white p-3.5 shadow-sm ring-1 ring-slate-900/5">
+          <div className="rounded-2xl bg-white p-3.5 shadow-[0_2px_20px_-6px_rgba(120,90,40,0.14)] ring-1 ring-black/[0.03]">
             <p className="text-[11px] text-slate-400">支出</p>
             <p className="mt-1 text-[17px] font-bold text-rose-500">
               {formatYen(expense)}
             </p>
           </div>
-          <div className="rounded-2xl bg-white p-3.5 shadow-sm ring-1 ring-slate-900/5">
+          <div className="rounded-2xl bg-white p-3.5 shadow-[0_2px_20px_-6px_rgba(120,90,40,0.14)] ring-1 ring-black/[0.03]">
             <p className="text-[11px] text-slate-400">差引</p>
             <p className="mt-1 text-[17px] font-bold text-slate-900">
               {formatYen(balance)}
@@ -111,7 +103,7 @@ export default async function HomePage() {
         <h2 className="mb-2 px-1 text-[13px] font-semibold uppercase tracking-wide text-slate-400">
           資産総額
         </h2>
-        <div className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-900/5">
+        <div className="rounded-2xl bg-white p-4 shadow-[0_2px_20px_-6px_rgba(120,90,40,0.14)] ring-1 ring-black/[0.03]">
           <p className="text-[26px] font-bold text-amber-700">
             {formatYen(assetsTotal)}
           </p>
@@ -129,7 +121,7 @@ export default async function HomePage() {
         <h2 className="mb-2 px-1 text-[13px] font-semibold uppercase tracking-wide text-slate-400">
           近い予定
         </h2>
-        <div className="divide-y divide-slate-100 rounded-2xl bg-white shadow-sm ring-1 ring-slate-900/5">
+        <div className="divide-y divide-slate-100 rounded-2xl bg-white shadow-[0_2px_20px_-6px_rgba(120,90,40,0.14)] ring-1 ring-black/[0.03]">
           {upcoming.length === 0 && (
             <p className="p-4 text-[13px] text-slate-400">予定はありません</p>
           )}
