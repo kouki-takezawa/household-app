@@ -16,6 +16,7 @@ import {
   addAssetAccount as addAssetAccountAction,
   removeAssetAccount as removeAssetAccountAction,
 } from "@/lib/actions";
+import { ColorAvatar } from "@/components/ColorAvatar";
 import { EmptyState } from "@/components/EmptyState";
 import { useToast } from "@/components/Toast";
 import { useConfirm } from "@/components/ConfirmDialog";
@@ -263,13 +264,10 @@ export default function SettingsClient({
             <p className="mb-2 px-1 text-[12px] text-muted">
               日程表の色分け・フィルターに使うメンバーです。
             </p>
-            <div className="divide-y divide-line-soft rounded-2xl bg-surface shadow-[0_2px_20px_-6px_rgba(120,90,40,0.14)] ring-1 ring-line-soft">
+            <div className="divide-y divide-line-soft rounded-2xl bg-surface shadow-card ring-1 ring-line-soft">
               {members.map((m) => (
                 <div key={m.id} className="flex items-center gap-3 p-3.5">
-                  <span
-                    className="h-3 w-3 flex-shrink-0 rounded-full"
-                    style={{ backgroundColor: m.color }}
-                  />
+                  <ColorAvatar label={m.name} color={m.color} size="sm" />
                   <p className="flex-1 text-[15px] font-medium text-foreground">{m.name}</p>
                   <button
                     type="button"
@@ -285,7 +283,7 @@ export default function SettingsClient({
 
           <form
             onSubmit={addMember}
-            className="rounded-2xl bg-surface p-4 shadow-[0_2px_20px_-6px_rgba(120,90,40,0.14)] ring-1 ring-line-soft"
+            className="rounded-2xl bg-surface p-4 shadow-card ring-1 ring-line-soft"
           >
             <h3 className="mb-3 text-[15px] font-semibold text-foreground">メンバーを追加</h3>
             <div className="mb-3">
@@ -317,7 +315,7 @@ export default function SettingsClient({
             </div>
             <button
               type="submit"
-              className="w-full rounded-full bg-amber-600 py-2.5 text-[15px] font-semibold text-white shadow-sm shadow-amber-600/30 transition-transform active:scale-[0.98]"
+              className="w-full rounded-full bg-brand py-2.5 text-[15px] font-semibold text-white shadow-sm shadow-brand/30 transition-transform active:scale-[0.98]"
             >
               追加
             </button>
@@ -329,13 +327,10 @@ export default function SettingsClient({
         <>
           <section>
             <p className="mb-2 px-1 text-[12px] text-muted">支出カテゴリ</p>
-            <div className="divide-y divide-line-soft rounded-2xl bg-surface shadow-[0_2px_20px_-6px_rgba(120,90,40,0.14)] ring-1 ring-line-soft">
+            <div className="divide-y divide-line-soft rounded-2xl bg-surface shadow-card ring-1 ring-line-soft">
               {expenseCategories.map((c) => (
                 <div key={c.id} className="flex items-center gap-3 p-3.5">
-                  <span
-                    className="h-3 w-3 flex-shrink-0 rounded-full"
-                    style={{ backgroundColor: c.color }}
-                  />
+                  <ColorAvatar label={c.name} color={c.color} size="sm" />
                   <p className="flex-1 text-[15px] font-medium text-foreground">{c.name}</p>
                   <button
                     type="button"
@@ -351,13 +346,10 @@ export default function SettingsClient({
 
           <section>
             <p className="mb-2 px-1 text-[12px] text-muted">収入カテゴリ</p>
-            <div className="divide-y divide-line-soft rounded-2xl bg-surface shadow-[0_2px_20px_-6px_rgba(120,90,40,0.14)] ring-1 ring-line-soft">
+            <div className="divide-y divide-line-soft rounded-2xl bg-surface shadow-card ring-1 ring-line-soft">
               {incomeCategories.map((c) => (
                 <div key={c.id} className="flex items-center gap-3 p-3.5">
-                  <span
-                    className="h-3 w-3 flex-shrink-0 rounded-full"
-                    style={{ backgroundColor: c.color }}
-                  />
+                  <ColorAvatar label={c.name} color={c.color} size="sm" />
                   <p className="flex-1 text-[15px] font-medium text-foreground">{c.name}</p>
                   <button
                     type="button"
@@ -373,7 +365,7 @@ export default function SettingsClient({
 
           <form
             onSubmit={addCategory}
-            className="rounded-2xl bg-surface p-4 shadow-[0_2px_20px_-6px_rgba(120,90,40,0.14)] ring-1 ring-line-soft"
+            className="rounded-2xl bg-surface p-4 shadow-card ring-1 ring-line-soft"
           >
             <h3 className="mb-3 text-[15px] font-semibold text-foreground">カテゴリを追加</h3>
             <div className="mb-3">
@@ -431,7 +423,7 @@ export default function SettingsClient({
             </div>
             <button
               type="submit"
-              className="w-full rounded-full bg-amber-600 py-2.5 text-[15px] font-semibold text-white shadow-sm shadow-amber-600/30 transition-transform active:scale-[0.98]"
+              className="w-full rounded-full bg-brand py-2.5 text-[15px] font-semibold text-white shadow-sm shadow-brand/30 transition-transform active:scale-[0.98]"
             >
               追加
             </button>
@@ -445,7 +437,7 @@ export default function SettingsClient({
             <p className="mb-2 px-1 text-[12px] text-muted">
               資産管理画面の「資産口座一覧」に表示される口座です。
             </p>
-            <div className="divide-y divide-line-soft rounded-2xl bg-surface shadow-[0_2px_20px_-6px_rgba(120,90,40,0.14)] ring-1 ring-line-soft">
+            <div className="divide-y divide-line-soft rounded-2xl bg-surface shadow-card ring-1 ring-line-soft">
               {assetAccounts.length === 0 && (
                 <EmptyState
                   icon={
@@ -476,7 +468,7 @@ export default function SettingsClient({
 
           <form
             onSubmit={addAssetAccount}
-            className="rounded-2xl bg-surface p-4 shadow-[0_2px_20px_-6px_rgba(120,90,40,0.14)] ring-1 ring-line-soft"
+            className="rounded-2xl bg-surface p-4 shadow-card ring-1 ring-line-soft"
           >
             <h3 className="mb-3 text-[15px] font-semibold text-foreground">資産口座を追加</h3>
             <div className="mb-3">
@@ -512,7 +504,7 @@ export default function SettingsClient({
               <select
                 value={accountMemberId}
                 onChange={(e) => setAccountMemberId(e.target.value)}
-                className="mt-1 w-full rounded-xl border border-line bg-surface px-3.5 py-2.5 text-[16px] text-foreground focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
+                className="mt-1 w-full rounded-xl border border-line bg-surface px-3.5 py-2.5 text-[16px] text-foreground focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
               >
                 <option value="">未設定</option>
                 {members.map((m) => (
@@ -524,7 +516,7 @@ export default function SettingsClient({
             </label>
             <button
               type="submit"
-              className="w-full rounded-full bg-amber-600 py-2.5 text-[15px] font-semibold text-white shadow-sm shadow-amber-600/30 transition-transform active:scale-[0.98]"
+              className="w-full rounded-full bg-brand py-2.5 text-[15px] font-semibold text-white shadow-sm shadow-brand/30 transition-transform active:scale-[0.98]"
             >
               追加
             </button>

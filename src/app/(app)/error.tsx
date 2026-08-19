@@ -20,7 +20,7 @@ export default function AppError({ reset }: { error: Error & { digest?: string }
       <button
         type="button"
         onClick={() => reset()}
-        className="rounded-full bg-amber-600 px-6 py-2.5 text-[14px] font-semibold text-white shadow-sm shadow-amber-600/30 transition-transform active:scale-[0.98]"
+        className="rounded-full bg-brand px-6 py-2.5 text-[14px] font-semibold text-white shadow-sm shadow-brand/30 transition-transform active:scale-[0.98]"
       >
         再試行
       </button>

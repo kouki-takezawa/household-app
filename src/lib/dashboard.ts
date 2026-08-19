@@ -39,3 +39,18 @@ export function shiftMonthStr(monthStr: string, delta: number): string {
   const d = new Date(y, m - 1 + delta, 1);
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
 }
+
+/** 直近 months ヶ月分（当月を含む）の資産総額推移。ダッシュボードのスパークライン用。 */
+export function assetsTrend(
+  accounts: AssetAccount[],
+  snapshots: AssetSnapshot[],
+  currentMonth: string,
+  months = 6
+): number[] {
+  const values: number[] = [];
+  for (let i = months - 1; i >= 0; i--) {
+    const m = shiftMonthStr(currentMonth, -i);
+    values.push(totalAssetsAsOf(accounts, snapshots, `${m}-31`));
+  }
+  return values;
+}

@@ -25,6 +25,7 @@ import {
   todayStr,
 } from "@/lib/types";
 import { addTransaction, editTransaction, removeTransaction } from "@/lib/actions";
+import { ColorAvatar } from "@/components/ColorAvatar";
 import { EmptyState } from "@/components/EmptyState";
 import { useToast } from "@/components/Toast";
 import { useConfirm } from "@/components/ConfirmDialog";
@@ -328,7 +329,7 @@ export default function BudgetClient({
           <button
             type="button"
             onClick={openNewForm}
-            className="rounded-full bg-amber-600 px-4 py-2 text-[14px] font-semibold text-white shadow-sm shadow-amber-600/30 transition-transform active:scale-95"
+            className="rounded-full bg-brand px-4 py-2 text-[14px] font-semibold text-white shadow-sm shadow-brand/30 transition-transform active:scale-95"
           >
             ＋ 記録
           </button>
@@ -355,22 +356,22 @@ export default function BudgetClient({
       )}
 
       <section className="grid grid-cols-3 gap-2.5">
-        <div className="rounded-2xl bg-surface p-3.5 shadow-[0_2px_20px_-6px_rgba(120,90,40,0.14)] ring-1 ring-line-soft">
+        <div className="rounded-2xl bg-surface p-3.5 shadow-card ring-1 ring-line-soft">
           <p className="text-[11px] text-muted">収入</p>
-          <p className="mt-1 text-[16px] font-bold text-emerald-600">{formatYen(income)}</p>
+          <p className="mt-1 text-[16px] font-bold tabular-nums text-emerald-600">{formatYen(income)}</p>
         </div>
-        <div className="rounded-2xl bg-surface p-3.5 shadow-[0_2px_20px_-6px_rgba(120,90,40,0.14)] ring-1 ring-line-soft">
+        <div className="rounded-2xl bg-surface p-3.5 shadow-card ring-1 ring-line-soft">
           <p className="text-[11px] text-muted">支出</p>
-          <p className="mt-1 text-[16px] font-bold text-rose-500">{formatYen(expense)}</p>
+          <p className="mt-1 text-[16px] font-bold tabular-nums text-rose-500">{formatYen(expense)}</p>
         </div>
-        <div className="rounded-2xl bg-surface p-3.5 shadow-[0_2px_20px_-6px_rgba(120,90,40,0.14)] ring-1 ring-line-soft">
+        <div className="rounded-2xl bg-surface p-3.5 shadow-card ring-1 ring-line-soft">
           <p className="text-[11px] text-muted">差引</p>
-          <p className="mt-1 text-[16px] font-bold text-foreground">{formatYen(income - expense)}</p>
+          <p className="mt-1 text-[16px] font-bold tabular-nums text-foreground">{formatYen(income - expense)}</p>
         </div>
       </section>
 
       {categoryBreakdown.length > 0 && (
-        <section className="rounded-2xl bg-surface p-4 shadow-[0_2px_20px_-6px_rgba(120,90,40,0.14)] ring-1 ring-line-soft">
+        <section className="rounded-2xl bg-surface p-4 shadow-card ring-1 ring-line-soft">
           <h2 className="mb-2 text-[13px] font-semibold uppercase tracking-wide text-muted">
             カテゴリ別支出
           </h2>
@@ -415,7 +416,7 @@ export default function BudgetClient({
         </section>
       )}
 
-      <section className="rounded-2xl bg-surface p-4 shadow-[0_2px_20px_-6px_rgba(120,90,40,0.14)] ring-1 ring-line-soft">
+      <section className="rounded-2xl bg-surface p-4 shadow-card ring-1 ring-line-soft">
         <h2 className="mb-2 text-[13px] font-semibold uppercase tracking-wide text-muted">
           {periodMode === "month" ? "月別推移（直近6ヶ月）" : "年別推移"}
         </h2>
@@ -456,7 +457,7 @@ export default function BudgetClient({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="カテゴリ・メモで検索（全期間）"
-            className="w-full rounded-full border border-line bg-surface py-2.5 pl-10 pr-9 text-[15px] text-foreground shadow-sm focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
+            className="w-full rounded-full border border-line bg-surface py-2.5 pl-10 pr-9 text-[15px] text-foreground shadow-sm focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
           />
           {searchQuery && (
             <button
@@ -469,7 +470,7 @@ export default function BudgetClient({
             </button>
           )}
         </div>
-        <div className="divide-y divide-line-soft rounded-2xl bg-surface shadow-[0_2px_20px_-6px_rgba(120,90,40,0.14)] ring-1 ring-line-soft">
+        <div className="divide-y divide-line-soft rounded-2xl bg-surface shadow-card ring-1 ring-line-soft">
           {visibleTx.length === 0 && (
             <EmptyState
               icon={
@@ -486,10 +487,7 @@ export default function BudgetClient({
             const member = findMemberById(members, t.memberId);
             return (
               <div key={t.id} className="flex items-center gap-3 p-3.5">
-                <span
-                  className="h-2.5 w-2.5 flex-shrink-0 rounded-full"
-                  style={{ backgroundColor: category?.color }}
-                />
+                <ColorAvatar label={category?.name ?? "?"} color={category?.color} />
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-[15px] font-medium text-foreground">
                     {category?.name}
@@ -501,7 +499,7 @@ export default function BudgetClient({
                   </p>
                 </div>
                 <p
-                  className={`text-[15px] font-semibold ${
+                  className={`text-[15px] font-semibold tabular-nums ${
                     t.type === "income" ? "text-emerald-600" : "text-rose-500"
                   }`}
                 >
@@ -656,7 +654,7 @@ export default function BudgetClient({
               <button
                 type="submit"
                 disabled={saving}
-                className="flex-1 rounded-full bg-amber-600 py-3 text-[15px] font-semibold text-white shadow-sm shadow-amber-600/30 transition-transform active:scale-[0.98] disabled:opacity-60"
+                className="flex-1 rounded-full bg-brand py-3 text-[15px] font-semibold text-white shadow-sm shadow-brand/30 transition-transform active:scale-[0.98] disabled:opacity-60"
               >
                 {saving ? "保存中…" : "保存"}
               </button>

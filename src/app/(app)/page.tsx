@@ -1,6 +1,8 @@
 import Link from "next/link";
+import { ColorAvatar } from "@/components/ColorAvatar";
 import { EmptyState } from "@/components/EmptyState";
 import { GlobalSearch } from "@/components/GlobalSearch";
+import { Sparkline } from "@/components/Sparkline";
 import {
   getTransactions,
   getEvents,
@@ -13,6 +15,7 @@ import {
   monthlySummary,
   upcomingEvents,
   totalAssetsAsOf,
+  assetsTrend,
   shiftMonthStr,
 } from "@/lib/dashboard";
 
@@ -37,6 +40,7 @@ export default async function HomePage() {
     assetsTotalPrevMonth > 0
       ? ((assetsTotal - assetsTotalPrevMonth) / assetsTotalPrevMonth) * 100
       : null;
+  const trend = assetsTrend(accounts, snapshots, currentMonth, 6);
 
   return (
     <div className="flex flex-col gap-7">
@@ -44,15 +48,15 @@ export default async function HomePage() {
 
       <section>
         <p className="px-1 text-[13px] font-medium text-muted">資産総額</p>
-        <div className="mt-2 rounded-[28px] bg-surface p-6 shadow-[0_4px_28px_-6px_rgba(120,90,40,0.18)] ring-1 ring-line-soft">
-          <p className="text-[40px] font-bold leading-none tracking-tight text-foreground">
+        <div className="mt-2 rounded-[28px] bg-surface p-6 shadow-card-lg ring-1 ring-line-soft">
+          <p className="text-[44px] font-bold leading-none tracking-tight tabular-nums text-foreground">
             {formatYen(assetsTotal)}
           </p>
           {assetsDelta !== null && (
             <p
               className={`mt-3 inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[13px] font-semibold ${
                 assetsDelta >= 0
-                  ? "bg-emerald-600/10 text-emerald-600"
+                  ? "bg-brand/10 text-brand"
                   : "bg-rose-500/10 text-rose-500"
               }`}
             >
@@ -61,9 +65,14 @@ export default async function HomePage() {
               <span className="font-normal text-muted">先月比</span>
             </p>
           )}
+          {trend.some((v) => v > 0) && (
+            <div className="mt-4 -mb-1">
+              <Sparkline values={trend} />
+            </div>
+          )}
           <Link
             href="/assets"
-            className="mt-4 inline-block text-[13px] font-medium text-brand"
+            className="mt-2 inline-block text-[13px] font-medium text-brand"
           >
             資産管理を見る →
           </Link>
@@ -75,21 +84,21 @@ export default async function HomePage() {
           今月の収支（{currentMonth}）
         </h2>
         <div className="grid grid-cols-3 gap-2.5">
-          <div className="rounded-2xl bg-surface p-3.5 shadow-[0_2px_20px_-6px_rgba(120,90,40,0.14)] ring-1 ring-line-soft">
+          <div className="rounded-2xl bg-surface p-3.5 shadow-card ring-1 ring-line-soft">
             <p className="text-[11px] text-muted">収入</p>
-            <p className="mt-1 text-[17px] font-bold text-emerald-600">
+            <p className="mt-1 text-[17px] font-bold tabular-nums text-emerald-600">
               {formatYen(income)}
             </p>
           </div>
-          <div className="rounded-2xl bg-surface p-3.5 shadow-[0_2px_20px_-6px_rgba(120,90,40,0.14)] ring-1 ring-line-soft">
+          <div className="rounded-2xl bg-surface p-3.5 shadow-card ring-1 ring-line-soft">
             <p className="text-[11px] text-muted">支出</p>
-            <p className="mt-1 text-[17px] font-bold text-rose-500">
+            <p className="mt-1 text-[17px] font-bold tabular-nums text-rose-500">
               {formatYen(expense)}
             </p>
           </div>
-          <div className="rounded-2xl bg-surface p-3.5 shadow-[0_2px_20px_-6px_rgba(120,90,40,0.14)] ring-1 ring-line-soft">
+          <div className="rounded-2xl bg-surface p-3.5 shadow-card ring-1 ring-line-soft">
             <p className="text-[11px] text-muted">差引</p>
-            <p className="mt-1 text-[17px] font-bold text-foreground">
+            <p className="mt-1 text-[17px] font-bold tabular-nums text-foreground">
               {formatYen(balance)}
             </p>
           </div>
@@ -106,7 +115,7 @@ export default async function HomePage() {
         <h2 className="mb-2 px-1 text-[13px] font-semibold uppercase tracking-wide text-muted">
           近い予定
         </h2>
-        <div className="divide-y divide-line-soft rounded-2xl bg-surface shadow-[0_2px_20px_-6px_rgba(120,90,40,0.14)] ring-1 ring-line-soft">
+        <div className="divide-y divide-line-soft rounded-2xl bg-surface shadow-card ring-1 ring-line-soft">
           {upcoming.length === 0 && (
             <EmptyState
               icon={
@@ -126,10 +135,7 @@ export default async function HomePage() {
                 href={`/schedule/${event.id}`}
                 className="flex items-center gap-3 p-3.5 active:bg-track"
               >
-                <span
-                  className="h-2.5 w-2.5 flex-shrink-0 rounded-full"
-                  style={{ backgroundColor: member?.color }}
-                />
+                <ColorAvatar label={member?.name ?? "?"} color={member?.color} />
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-[15px] font-medium text-foreground">
                     {event.title}

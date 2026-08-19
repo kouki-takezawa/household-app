@@ -3,7 +3,7 @@ export function fieldClass(hasError = false): string {
   return `mt-1 w-full rounded-xl border bg-surface px-3.5 py-2.5 text-[16px] text-foreground focus:outline-none focus:ring-2 ${
     hasError
       ? "border-rose-400 focus:ring-rose-400/30"
-      : "border-line focus:border-amber-500 focus:ring-amber-500/30"
+      : "border-line focus:border-brand focus:ring-brand/30"
   }`;
 }
 
