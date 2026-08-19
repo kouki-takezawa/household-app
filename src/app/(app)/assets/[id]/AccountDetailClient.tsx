@@ -2,9 +2,9 @@
 
 import { useMemo, useState } from "react";
 import {
+  Area,
+  AreaChart,
   CartesianGrid,
-  Line,
-  LineChart,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -159,38 +159,51 @@ export default function AccountDetailClient({
   return (
     <SlidePage title={account.name}>
       <div className="flex flex-col gap-5 pt-2">
-        <div className="rounded-2xl bg-surface p-5 shadow-[0_2px_20px_-6px_rgba(120,90,40,0.14)] ring-1 ring-line-soft">
+        <div className="rounded-2xl bg-surface p-5 shadow-card ring-1 ring-line-soft">
           <p className="text-[13px] text-muted">
             {TYPE_LABEL[account.type]}
             {member ? ` ・ ${member.name}` : ""}
           </p>
-          <p className="mt-1 text-[32px] font-bold leading-tight text-foreground">
+          <p className="mt-1 text-[32px] font-bold leading-tight tabular-nums text-foreground">
             {latest ? formatYen(latest.value) : "未記録"}
           </p>
           {latest && <p className="mt-1 text-[12px] text-muted">最終更新 {latest.date}</p>}
           <button
             type="button"
             onClick={openNewForm}
-            className="mt-4 w-full rounded-full bg-amber-600 py-2.5 text-[14px] font-semibold text-white shadow-sm shadow-amber-600/30 transition-transform active:scale-[0.98]"
+            className="mt-4 w-full rounded-full bg-brand py-2.5 text-[14px] font-semibold text-white shadow-sm shadow-brand/30 transition-transform active:scale-[0.98]"
           >
             ＋ 残高・評価額を記録
           </button>
         </div>
 
         {trend.length > 1 && (
-          <div className="rounded-2xl bg-surface p-4 shadow-[0_2px_20px_-6px_rgba(120,90,40,0.14)] ring-1 ring-line-soft">
+          <div className="rounded-2xl bg-surface p-4 shadow-card ring-1 ring-line-soft">
             <h2 className="mb-2 text-[13px] font-semibold uppercase tracking-wide text-muted">
               推移
             </h2>
             <div className="h-48">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={trend}>
+                <AreaChart data={trend}>
+                  <defs>
+                    <linearGradient id="accountValueGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="var(--brand)" stopOpacity={0.35} />
+                      <stop offset="100%" stopColor="var(--brand)" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--line)" />
                   <XAxis dataKey="date" fontSize={12} stroke="var(--muted)" />
                   <YAxis fontSize={12} stroke="var(--muted)" tickFormatter={(v) => `${v / 10000}万`} />
                   <Tooltip formatter={(v) => formatYen(Number(v ?? 0))} />
-                  <Line type="monotone" dataKey="評価額" stroke="#d97706" strokeWidth={2.5} dot />
-                </LineChart>
+                  <Area
+                    type="monotone"
+                    dataKey="評価額"
+                    stroke="var(--brand)"
+                    strokeWidth={2.5}
+                    fill="url(#accountValueGradient)"
+                    dot={{ r: 3 }}
+                  />
+                </AreaChart>
               </ResponsiveContainer>
             </div>
           </div>
@@ -200,7 +213,7 @@ export default function AccountDetailClient({
           <h2 className="mb-2 px-1 text-[13px] font-semibold uppercase tracking-wide text-muted">
             記録履歴
           </h2>
-          <div className="divide-y divide-line-soft rounded-2xl bg-surface shadow-[0_2px_20px_-6px_rgba(120,90,40,0.14)] ring-1 ring-line-soft">
+          <div className="divide-y divide-line-soft rounded-2xl bg-surface shadow-card ring-1 ring-line-soft">
             {history.length === 0 && (
               <EmptyState
                 icon={
@@ -214,7 +227,7 @@ export default function AccountDetailClient({
             {history.map((s) => (
               <div key={s.id} className="flex items-center gap-3 p-3.5">
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-[15px] font-medium text-foreground">
+                  <p className="truncate text-[15px] font-medium tabular-nums text-foreground">
                     {formatYen(s.value)}
                   </p>
                   <p className="text-[12px] text-muted">
@@ -261,7 +274,7 @@ export default function AccountDetailClient({
                   required
                   value={form.date}
                   onChange={(e) => setForm((f) => ({ ...f, date: e.target.value }))}
-                  className="mt-1 w-full rounded-xl border border-line bg-surface px-3.5 py-2.5 text-[16px] text-foreground focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
+                  className="mt-1 w-full rounded-xl border border-line bg-surface px-3.5 py-2.5 text-[16px] text-foreground focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
                 />
               </label>
               <label className="text-[12px] text-muted">
@@ -284,7 +297,7 @@ export default function AccountDetailClient({
                   type="text"
                   value={form.note}
                   onChange={(e) => setForm((f) => ({ ...f, note: e.target.value }))}
-                  className="mt-1 w-full rounded-xl border border-line bg-surface px-3.5 py-2.5 text-[16px] text-foreground focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
+                  className="mt-1 w-full rounded-xl border border-line bg-surface px-3.5 py-2.5 text-[16px] text-foreground focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
                   placeholder="任意"
                 />
               </label>
@@ -300,7 +313,7 @@ export default function AccountDetailClient({
               <button
                 type="submit"
                 disabled={saving}
-                className="flex-1 rounded-full bg-amber-600 py-3 text-[15px] font-semibold text-white shadow-sm shadow-amber-600/30 transition-transform active:scale-[0.98] disabled:opacity-60"
+                className="flex-1 rounded-full bg-brand py-3 text-[15px] font-semibold text-white shadow-sm shadow-brand/30 transition-transform active:scale-[0.98] disabled:opacity-60"
               >
                 {saving ? "保存中…" : "保存"}
               </button>

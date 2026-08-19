@@ -1,30 +1,36 @@
 @import "tailwindcss";
 
 :root {
-  --background: #faf3e4;
-  --foreground: #1c1c1e;
-  --brand: #d97706;
-  --brand-dark: #b45309;
+  --background: #f6f7f9;
+  --foreground: #12141a;
+  --brand: #16a34a;
+  --brand-dark: #15803d;
   --surface: #ffffff;
-  --muted: #94a3b8;
-  --subtle: #64748b;
-  --line: #e2e8f0;
-  --line-soft: #f1f5f9;
-  --track: #f1f5f9;
+  --muted: #97a0ac;
+  --subtle: #59616d;
+  --line: #e6e9ee;
+  --line-soft: #eef0f4;
+  --track: #eef0f4;
+  --shadow-card: 0 1px 2px rgba(16, 24, 40, 0.04), 0 8px 24px -10px rgba(16, 24, 40, 0.12);
+  --shadow-card-lg: 0 2px 6px rgba(16, 24, 40, 0.05), 0 20px 40px -12px rgba(16, 24, 40, 0.16);
+  --shadow-nav: 0 12px 32px -8px rgba(16, 24, 40, 0.18);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #17130f;
-    --foreground: #f2e9db;
-    --brand: #e6912a;
-    --brand-dark: #f3a53f;
-    --surface: #241e17;
-    --muted: #8d7c68;
-    --subtle: #b8a891;
-    --line: #382f24;
-    --line-soft: #2a2319;
-    --track: #2a2319;
+    --background: #0a0b0d;
+    --foreground: #f1f2f4;
+    --brand: #22c55e;
+    --brand-dark: #16a34a;
+    --surface: #18191d;
+    --muted: #80868f;
+    --subtle: #b4b9c0;
+    --line: #26282d;
+    --line-soft: #1e2024;
+    --track: #202226;
+    --shadow-card: 0 0 0 1px rgba(255, 255, 255, 0.03), 0 10px 30px -10px rgba(0, 0, 0, 0.55);
+    --shadow-card-lg: 0 0 0 1px rgba(255, 255, 255, 0.04), 0 24px 48px -12px rgba(0, 0, 0, 0.65);
+    --shadow-nav: 0 12px 32px -8px rgba(0, 0, 0, 0.55);
   }
 }
 
@@ -32,6 +38,7 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-brand: var(--brand);
+  --color-brand-dark: var(--brand-dark);
   --color-surface: var(--surface);
   --color-muted: var(--muted);
   --color-subtle: var(--subtle);
@@ -70,6 +77,18 @@ textarea {
 :focus-visible {
   outline: 2px solid var(--brand);
   outline-offset: 2px;
+}
+
+@layer utilities {
+  .shadow-card {
+    box-shadow: var(--shadow-card);
+  }
+  .shadow-card-lg {
+    box-shadow: var(--shadow-card-lg);
+  }
+  .shadow-nav {
+    box-shadow: var(--shadow-nav);
+  }
 }
 
 @keyframes toast-in {
