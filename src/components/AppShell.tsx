@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import clsx from "clsx";
 import { ToastProvider } from "./Toast";
+import { ConfirmProvider } from "./ConfirmDialog";
 
 const NAV_ITEMS = [
   {
@@ -65,38 +66,40 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <ToastProvider>
-      <div
-        className="flex min-h-screen flex-col bg-background text-foreground"
-        style={{ paddingTop: "env(safe-area-inset-top)" }}
-      >
-        <main className="mx-auto w-full max-w-3xl flex-1 px-4 pb-28 pt-8">{children}</main>
-
-        <nav
-          className="fixed inset-x-0 bottom-0 z-30 px-4"
-          style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 0.875rem)" }}
+      <ConfirmProvider>
+        <div
+          className="flex min-h-screen flex-col bg-background text-foreground"
+          style={{ paddingTop: "env(safe-area-inset-top)" }}
         >
-          <ul className="mx-auto flex w-full max-w-3xl items-center rounded-[28px] border border-line-soft/70 bg-surface/75 shadow-[0_10px_34px_-6px_rgba(120,90,40,0.22)] backdrop-blur-2xl dark:shadow-[0_10px_34px_-6px_rgba(0,0,0,0.5)]">
-            {NAV_ITEMS.map((item) => {
-              const active =
-                item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
-              return (
-                <li key={item.href} className="flex-1">
-                  <Link
-                    href={item.href}
-                    className={clsx(
-                      "flex flex-col items-center gap-0.5 py-2.5 text-[10px] font-medium transition-colors",
-                      active ? "text-brand" : "text-muted"
-                    )}
-                  >
-                    <span className="h-6 w-6">{item.icon}</span>
-                    {item.label}
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
-        </nav>
-      </div>
+          <main className="mx-auto w-full max-w-3xl flex-1 px-4 pb-28 pt-8">{children}</main>
+
+          <nav
+            className="fixed inset-x-0 bottom-0 z-30 px-4"
+            style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 0.875rem)" }}
+          >
+            <ul className="mx-auto flex w-full max-w-3xl items-center rounded-[28px] border border-line-soft/70 bg-surface/75 shadow-[0_10px_34px_-6px_rgba(120,90,40,0.22)] backdrop-blur-2xl dark:shadow-[0_10px_34px_-6px_rgba(0,0,0,0.5)]">
+              {NAV_ITEMS.map((item) => {
+                const active =
+                  item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
+                return (
+                  <li key={item.href} className="flex-1">
+                    <Link
+                      href={item.href}
+                      className={clsx(
+                        "flex flex-col items-center gap-0.5 py-2.5 text-[10px] font-medium transition-colors",
+                        active ? "text-brand" : "text-muted"
+                      )}
+                    >
+                      <span className="h-6 w-6">{item.icon}</span>
+                      {item.label}
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          </nav>
+        </div>
+      </ConfirmProvider>
     </ToastProvider>
   );
 }

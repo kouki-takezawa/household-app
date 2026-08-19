@@ -14,6 +14,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import clsx from "clsx";
 import {
   type Category,
   type Member,
@@ -26,6 +27,9 @@ import {
 import { addTransaction, editTransaction, removeTransaction } from "@/lib/actions";
 import { EmptyState } from "@/components/EmptyState";
 import { useToast } from "@/components/Toast";
+import { useConfirm } from "@/components/ConfirmDialog";
+import { fieldClass, FieldError } from "@/components/form";
+import { generateId } from "@/lib/id";
 
 function monthOptions(txs: Transaction[], defaultMonth: string): string[] {
   const set = new Set(txs.map((t) => t.date.slice(0, 7)));
@@ -63,33 +67,52 @@ export default function BudgetClient({
   const defaultMonth = today.slice(0, 7);
   const defaultYear = today.slice(0, 4);
   const showToast = useToast();
+  const confirmDialog = useConfirm();
 
   const [transactions, setTransactions] = useState<Transaction[]>(initialTransactions);
   const [periodMode, setPeriodMode] = useState<"month" | "year">("month");
   const [month, setMonth] = useState(defaultMonth);
   const [year, setYear] = useState(defaultYear);
+  const [memberFilter, setMemberFilter] = useState<Set<string>>(
+    new Set(members.map((m) => m.id))
+  );
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState(() => emptyForm(categories, members, today));
+  const [amountError, setAmountError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
 
   const months = useMemo(() => monthOptions(transactions, defaultMonth), [transactions, defaultMonth]);
   const years = useMemo(() => yearOptions(transactions, defaultYear), [transactions, defaultYear]);
 
+  function toggleMember(id: string) {
+    setMemberFilter((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  const memberFilteredTx = useMemo(
+    () => transactions.filter((t) => !t.memberId || memberFilter.has(t.memberId)),
+    [transactions, memberFilter]
+  );
+
   const periodTx = useMemo(() => {
     const prefix = periodMode === "month" ? month : year;
-    return transactions
+    return memberFilteredTx
       .filter((t) => t.date.startsWith(prefix))
       .sort((a, b) => b.date.localeCompare(a.date));
-  }, [transactions, periodMode, month, year]);
+  }, [memberFilteredTx, periodMode, month, year]);
 
   const isSearching = searchQuery.trim().length > 0;
 
   const searchResults = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
     if (!q) return [];
-    return transactions
+    return memberFilteredTx
       .filter((t) => {
         const categoryName = findCategoryById(categories, t.categoryId)?.name ?? "";
         return (
@@ -97,7 +120,7 @@ export default function BudgetClient({
         );
       })
       .sort((a, b) => b.date.localeCompare(a.date));
-  }, [transactions, categories, searchQuery]);
+  }, [memberFilteredTx, categories, searchQuery]);
 
   const visibleTx = isSearching ? searchResults : periodTx;
 
@@ -124,36 +147,38 @@ export default function BudgetClient({
   const monthlyTrend = useMemo(() => {
     const recentMonths = [...months].sort().slice(-6);
     return recentMonths.map((m) => {
-      const tx = transactions.filter((t) => t.date.startsWith(m));
+      const tx = memberFilteredTx.filter((t) => t.date.startsWith(m));
       return {
         label: m.slice(5) + "月",
         収入: tx.filter((t) => t.type === "income").reduce((s, t) => s + t.amount, 0),
         支出: tx.filter((t) => t.type === "expense").reduce((s, t) => s + t.amount, 0),
       };
     });
-  }, [transactions, months]);
+  }, [memberFilteredTx, months]);
 
   const yearlyTrend = useMemo(() => {
     return [...years].sort().map((y) => {
-      const tx = transactions.filter((t) => t.date.startsWith(y));
+      const tx = memberFilteredTx.filter((t) => t.date.startsWith(y));
       return {
         label: y + "年",
         収入: tx.filter((t) => t.type === "income").reduce((s, t) => s + t.amount, 0),
         支出: tx.filter((t) => t.type === "expense").reduce((s, t) => s + t.amount, 0),
       };
     });
-  }, [transactions, years]);
+  }, [memberFilteredTx, years]);
 
   const trend = periodMode === "month" ? monthlyTrend : yearlyTrend;
 
   function openNewForm() {
     setEditingId(null);
+    setAmountError(null);
     setForm(emptyForm(categories, members, today));
     setShowForm(true);
   }
 
   function openEditForm(t: Transaction) {
     setEditingId(t.id);
+    setAmountError(null);
     setForm({
       date: t.date,
       type: t.type,
@@ -165,20 +190,46 @@ export default function BudgetClient({
     setShowForm(true);
   }
 
-  async function handleDelete(id: string) {
-    if (!confirm("この記録を削除しますか？")) return;
-    setTransactions((prev) => prev.filter((t) => t.id !== id));
-    await removeTransaction(id);
-    showToast("削除しました");
+  async function handleDelete(target: Transaction) {
+    const ok = await confirmDialog({
+      title: "この記録を削除しますか？",
+      danger: true,
+    });
+    if (!ok) return;
+
+    setTransactions((prev) => prev.filter((t) => t.id !== target.id));
+    try {
+      await removeTransaction(target.id);
+      showToast("削除しました", {
+        actionLabel: "元に戻す",
+        onAction: async () => {
+          setTransactions((prev) => [target, ...prev]);
+          try {
+            await addTransaction(target);
+          } catch {
+            setTransactions((prev) => prev.filter((t) => t.id !== target.id));
+            showToast("元に戻せませんでした", { variant: "error" });
+          }
+        },
+      });
+    } catch {
+      setTransactions((prev) => [target, ...prev]);
+      showToast("削除に失敗しました。もう一度お試しください", { variant: "error" });
+    }
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const amount = Number(form.amount);
-    if (!amount || amount <= 0) return;
+    if (!amount || amount <= 0) {
+      setAmountError("金額を入力してください");
+      return;
+    }
+    setAmountError(null);
     setSaving(true);
 
     if (editingId) {
+      const previous = transactions.find((t) => t.id === editingId);
       const updated: Transaction = {
         id: editingId,
         date: form.date,
@@ -189,10 +240,19 @@ export default function BudgetClient({
         memo: form.memo || undefined,
       };
       setTransactions((prev) => prev.map((t) => (t.id === editingId ? updated : t)));
-      await editTransaction(editingId, updated);
+      try {
+        await editTransaction(editingId, updated);
+        showToast("更新しました");
+        setShowForm(false);
+      } catch {
+        if (previous) {
+          setTransactions((prev) => prev.map((t) => (t.id === editingId ? previous : t)));
+        }
+        showToast("更新に失敗しました。もう一度お試しください", { variant: "error" });
+      }
     } else {
       const newTx: Transaction = {
-        id: `t${Date.now()}`,
+        id: generateId("t"),
         date: form.date,
         type: form.type,
         categoryId: form.categoryId,
@@ -201,11 +261,16 @@ export default function BudgetClient({
         memo: form.memo || undefined,
       };
       setTransactions((prev) => [newTx, ...prev]);
-      await addTransaction(newTx);
+      try {
+        await addTransaction(newTx);
+        showToast("保存しました");
+        setShowForm(false);
+      } catch {
+        setTransactions((prev) => prev.filter((t) => t.id !== newTx.id));
+        showToast("保存に失敗しました。もう一度お試しください", { variant: "error" });
+      }
     }
     setSaving(false);
-    setShowForm(false);
-    showToast(editingId ? "更新しました" : "保存しました");
   }
 
   const availableCategories = categories.filter((c) => c.type === form.type);
@@ -269,6 +334,25 @@ export default function BudgetClient({
           </button>
         </div>
       </section>
+
+      {members.length > 0 && (
+        <section className="flex flex-wrap gap-2">
+          {members.map((m) => (
+            <button
+              key={m.id}
+              type="button"
+              onClick={() => toggleMember(m.id)}
+              className={clsx(
+                "flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[12px] font-medium transition-opacity",
+                memberFilter.has(m.id) ? "border-line bg-surface" : "border-line-soft opacity-40"
+              )}
+            >
+              <span className="h-2 w-2 rounded-full" style={{ backgroundColor: m.color }} />
+              {m.name}
+            </button>
+          ))}
+        </section>
+      )}
 
       <section className="grid grid-cols-3 gap-2.5">
         <div className="rounded-2xl bg-surface p-3.5 shadow-[0_2px_20px_-6px_rgba(120,90,40,0.14)] ring-1 ring-line-soft">
@@ -433,7 +517,7 @@ export default function BudgetClient({
                 </button>
                 <button
                   type="button"
-                  onClick={() => handleDelete(t.id)}
+                  onClick={() => handleDelete(t)}
                   className="rounded-full px-2.5 py-1.5 text-[12px] text-rose-500 active:bg-rose-500/10"
                 >
                   削除
@@ -500,7 +584,7 @@ export default function BudgetClient({
                   required
                   value={form.date}
                   onChange={(e) => setForm((f) => ({ ...f, date: e.target.value }))}
-                  className="mt-1 w-full rounded-xl border border-line bg-surface px-3.5 py-2.5 text-[16px] text-foreground focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
+                  className={fieldClass()}
                 />
               </label>
 
@@ -508,13 +592,15 @@ export default function BudgetClient({
                 金額
                 <input
                   type="number"
-                  required
-                  min={1}
                   value={form.amount}
-                  onChange={(e) => setForm((f) => ({ ...f, amount: e.target.value }))}
-                  className="mt-1 w-full rounded-xl border border-line bg-surface px-3.5 py-2.5 text-[16px] text-foreground focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
+                  onChange={(e) => {
+                    setForm((f) => ({ ...f, amount: e.target.value }));
+                    if (amountError) setAmountError(null);
+                  }}
+                  className={fieldClass(!!amountError)}
                   placeholder="0"
                 />
+                {amountError && <FieldError>{amountError}</FieldError>}
               </label>
 
               <label className="text-[12px] text-muted">
@@ -522,7 +608,7 @@ export default function BudgetClient({
                 <select
                   value={form.categoryId}
                   onChange={(e) => setForm((f) => ({ ...f, categoryId: e.target.value }))}
-                  className="mt-1 w-full rounded-xl border border-line bg-surface px-3.5 py-2.5 text-[16px] text-foreground focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
+                  className={fieldClass()}
                 >
                   {availableCategories.map((c) => (
                     <option key={c.id} value={c.id}>
@@ -537,7 +623,7 @@ export default function BudgetClient({
                 <select
                   value={form.memberId}
                   onChange={(e) => setForm((f) => ({ ...f, memberId: e.target.value }))}
-                  className="mt-1 w-full rounded-xl border border-line bg-surface px-3.5 py-2.5 text-[16px] text-foreground focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
+                  className={fieldClass()}
                 >
                   {members.map((m) => (
                     <option key={m.id} value={m.id}>
@@ -553,7 +639,7 @@ export default function BudgetClient({
                   type="text"
                   value={form.memo}
                   onChange={(e) => setForm((f) => ({ ...f, memo: e.target.value }))}
-                  className="mt-1 w-full rounded-xl border border-line bg-surface px-3.5 py-2.5 text-[16px] text-foreground focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
+                  className={fieldClass()}
                   placeholder="任意"
                 />
               </label>

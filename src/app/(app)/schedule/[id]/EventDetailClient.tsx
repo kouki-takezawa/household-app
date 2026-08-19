@@ -8,9 +8,11 @@ import {
   findMemberById,
   formatEventSchedule,
 } from "@/lib/types";
-import { editEvent, removeEvent } from "@/lib/actions";
+import { addEvent, editEvent, removeEvent } from "@/lib/actions";
 import { SlidePage } from "@/components/SlidePage";
 import { useToast } from "@/components/Toast";
+import { useConfirm } from "@/components/ConfirmDialog";
+import { fieldClass, FieldError } from "@/components/form";
 
 const RECURRENCE_LABEL: Record<NonNullable<ScheduleEvent["recurrence"]>, string> = {
   none: "なし",
@@ -27,10 +29,12 @@ export default function EventDetailClient({
 }) {
   const router = useRouter();
   const showToast = useToast();
+  const confirmDialog = useConfirm();
   const member = findMemberById(members, event.memberId);
 
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [titleError, setTitleError] = useState<string | null>(null);
   const [form, setForm] = useState({
     title: event.title,
     startDate: event.startDate,
@@ -44,29 +48,53 @@ export default function EventDetailClient({
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!form.title.trim()) return;
+    if (!form.title.trim()) {
+      setTitleError("タイトルを入力してください");
+      return;
+    }
+    setTitleError(null);
     const endDate = form.endDate < form.startDate ? form.startDate : form.endDate;
     setSaving(true);
-    await editEvent(event.id, {
-      title: form.title,
-      startDate: form.startDate,
-      startTime: form.startTime || undefined,
-      endDate,
-      endTime: form.endTime || undefined,
-      memberId: form.memberId,
-      recurrence: form.recurrence,
-      memo: form.memo || undefined,
-    });
-    setSaving(false);
-    showToast("更新しました");
-    router.back();
+    try {
+      await editEvent(event.id, {
+        title: form.title,
+        startDate: form.startDate,
+        startTime: form.startTime || undefined,
+        endDate,
+        endTime: form.endTime || undefined,
+        memberId: form.memberId,
+        recurrence: form.recurrence,
+        memo: form.memo || undefined,
+      });
+      showToast("更新しました");
+      router.back();
+    } catch {
+      showToast("更新に失敗しました。もう一度お試しください", { variant: "error" });
+    } finally {
+      setSaving(false);
+    }
   }
 
   async function handleDelete() {
-    if (!confirm("この予定を削除しますか？")) return;
-    await removeEvent(event.id);
-    showToast("削除しました");
-    router.back();
+    const ok = await confirmDialog({ title: "この予定を削除しますか？", danger: true });
+    if (!ok) return;
+
+    try {
+      await removeEvent(event.id);
+      showToast("削除しました", {
+        actionLabel: "元に戻す",
+        onAction: async () => {
+          try {
+            await addEvent(event);
+          } catch {
+            showToast("元に戻せませんでした", { variant: "error" });
+          }
+        },
+      });
+      router.back();
+    } catch {
+      showToast("削除に失敗しました。もう一度お試しください", { variant: "error" });
+    }
   }
 
   if (editing) {
@@ -77,11 +105,14 @@ export default function EventDetailClient({
             タイトル
             <input
               type="text"
-              required
               value={form.title}
-              onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
-              className="mt-1 w-full rounded-xl border border-line bg-surface px-3.5 py-2.5 text-[16px] text-foreground focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
+              onChange={(e) => {
+                setForm((f) => ({ ...f, title: e.target.value }));
+                if (titleError) setTitleError(null);
+              }}
+              className={fieldClass(!!titleError)}
             />
+            {titleError && <FieldError>{titleError}</FieldError>}
           </label>
           <div className="grid grid-cols-2 gap-3">
             <label className="text-[12px] text-muted">

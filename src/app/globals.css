@@ -64,6 +64,14 @@ textarea {
   -webkit-font-smoothing: antialiased;
 }
 
+/* ブラウザ既定の青いフォーカスリングをブランドカラーに統一する。
+   独自のフォーカスリング（focus:ring-*）を持つ要素は focus:outline-none で
+   明示的に無効化しているため、二重表示にはならない。 */
+:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+
 @keyframes toast-in {
   from {
     opacity: 0;

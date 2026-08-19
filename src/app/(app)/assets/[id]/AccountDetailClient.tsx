@@ -23,6 +23,9 @@ import { addAssetSnapshot, editAssetSnapshot, removeAssetSnapshot } from "@/lib/
 import { SlidePage } from "@/components/SlidePage";
 import { EmptyState } from "@/components/EmptyState";
 import { useToast } from "@/components/Toast";
+import { useConfirm } from "@/components/ConfirmDialog";
+import { fieldClass, FieldError } from "@/components/form";
+import { generateId } from "@/lib/id";
 
 function emptyForm(today: string) {
   return { date: today, value: "", note: "" };
@@ -39,6 +42,7 @@ export default function AccountDetailClient({
 }) {
   const today = todayStr();
   const showToast = useToast();
+  const confirmDialog = useConfirm();
   const member = findMemberById(members, account.memberId);
 
   const [snapshots, setSnapshots] = useState<AssetSnapshot[]>(initialSnapshots);
@@ -46,6 +50,7 @@ export default function AccountDetailClient({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState(() => emptyForm(today));
+  const [valueError, setValueError] = useState<string | null>(null);
 
   const history = useMemo(
     () => [...snapshots].sort((a, b) => b.date.localeCompare(a.date)),
@@ -63,30 +68,55 @@ export default function AccountDetailClient({
 
   function openNewForm() {
     setEditingId(null);
+    setValueError(null);
     setForm(emptyForm(today));
     setShowForm(true);
   }
 
   function openEditForm(snapshot: AssetSnapshot) {
     setEditingId(snapshot.id);
+    setValueError(null);
     setForm({ date: snapshot.date, value: String(snapshot.value), note: snapshot.note ?? "" });
     setShowForm(true);
   }
 
-  async function handleDelete(id: string) {
-    if (!confirm("この記録を削除しますか？")) return;
-    setSnapshots((prev) => prev.filter((s) => s.id !== id));
-    await removeAssetSnapshot(id);
-    showToast("削除しました");
+  async function handleDelete(target: AssetSnapshot) {
+    const ok = await confirmDialog({ title: "この記録を削除しますか？", danger: true });
+    if (!ok) return;
+
+    setSnapshots((prev) => prev.filter((s) => s.id !== target.id));
+    try {
+      await removeAssetSnapshot(target.id);
+      showToast("削除しました", {
+        actionLabel: "元に戻す",
+        onAction: async () => {
+          setSnapshots((prev) => [...prev, target]);
+          try {
+            await addAssetSnapshot(target);
+          } catch {
+            setSnapshots((prev) => prev.filter((s) => s.id !== target.id));
+            showToast("元に戻せませんでした", { variant: "error" });
+          }
+        },
+      });
+    } catch {
+      setSnapshots((prev) => [...prev, target]);
+      showToast("削除に失敗しました。もう一度お試しください", { variant: "error" });
+    }
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const value = Number(form.value);
-    if (!value || value < 0) return;
+    if (form.value === "" || Number.isNaN(value) || value < 0) {
+      setValueError("残高・評価額を入力してください");
+      return;
+    }
+    setValueError(null);
     setSaving(true);
 
     if (editingId) {
+      const previous = snapshots.find((s) => s.id === editingId);
       const updated: AssetSnapshot = {
         id: editingId,
         assetAccountId: account.id,
@@ -95,21 +125,35 @@ export default function AccountDetailClient({
         note: form.note || undefined,
       };
       setSnapshots((prev) => prev.map((s) => (s.id === editingId ? updated : s)));
-      await editAssetSnapshot(editingId, updated);
+      try {
+        await editAssetSnapshot(editingId, updated);
+        showToast("更新しました");
+        setShowForm(false);
+      } catch {
+        if (previous) {
+          setSnapshots((prev) => prev.map((s) => (s.id === editingId ? previous : s)));
+        }
+        showToast("更新に失敗しました。もう一度お試しください", { variant: "error" });
+      }
     } else {
       const newSnapshot: AssetSnapshot = {
-        id: `s${Date.now()}`,
+        id: generateId("s"),
         assetAccountId: account.id,
         date: form.date,
         value,
         note: form.note || undefined,
       };
       setSnapshots((prev) => [...prev, newSnapshot]);
-      await addAssetSnapshot(newSnapshot);
+      try {
+        await addAssetSnapshot(newSnapshot);
+        showToast("記録しました");
+        setShowForm(false);
+      } catch {
+        setSnapshots((prev) => prev.filter((s) => s.id !== newSnapshot.id));
+        showToast("記録に失敗しました。もう一度お試しください", { variant: "error" });
+      }
     }
     setSaving(false);
-    setShowForm(false);
-    showToast(editingId ? "更新しました" : "記録しました");
   }
 
   return (
@@ -187,7 +231,7 @@ export default function AccountDetailClient({
                 </button>
                 <button
                   type="button"
-                  onClick={() => handleDelete(s.id)}
+                  onClick={() => handleDelete(s)}
                   className="rounded-full px-2.5 py-1.5 text-[12px] text-rose-500 active:bg-rose-500/10"
                 >
                   削除
@@ -224,13 +268,15 @@ export default function AccountDetailClient({
                 残高・評価額
                 <input
                   type="number"
-                  required
-                  min={0}
                   value={form.value}
-                  onChange={(e) => setForm((f) => ({ ...f, value: e.target.value }))}
-                  className="mt-1 w-full rounded-xl border border-line bg-surface px-3.5 py-2.5 text-[16px] text-foreground focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
+                  onChange={(e) => {
+                    setForm((f) => ({ ...f, value: e.target.value }));
+                    if (valueError) setValueError(null);
+                  }}
+                  className={fieldClass(!!valueError)}
                   placeholder="0"
                 />
+                {valueError && <FieldError>{valueError}</FieldError>}
               </label>
               <label className="text-[12px] text-muted">
                 メモ

@@ -5,16 +5,13 @@ import Link from "next/link";
 import {
   addDays,
   addMonths,
-  differenceInCalendarDays,
   eachDayOfInterval,
   endOfMonth,
   endOfWeek,
   format,
-  getDate,
   isSameDay,
   isSameMonth,
   parseISO,
-  startOfDay,
   startOfMonth,
   startOfWeek,
   subMonths,
@@ -28,38 +25,14 @@ import {
   formatEventSchedule,
   todayStr,
 } from "@/lib/types";
+import { eventOccursOn } from "@/lib/schedule";
 import { addEvent } from "@/lib/actions";
 import { EmptyState } from "@/components/EmptyState";
 import { useToast } from "@/components/Toast";
+import { fieldClass, FieldError } from "@/components/form";
+import { generateId } from "@/lib/id";
 
 const WEEKDAYS = ["日", "月", "火", "水", "木", "金", "土"];
-
-function eventOccursOn(event: ScheduleEvent, date: Date): boolean {
-  const start = startOfDay(parseISO(event.startDate));
-  const end = startOfDay(parseISO(event.endDate));
-  const day = startOfDay(date);
-  const durationDays = differenceInCalendarDays(end, start);
-
-  if (day < start) return false;
-
-  switch (event.recurrence) {
-    case "weekly": {
-      const offsetInCycle = differenceInCalendarDays(day, start) % 7;
-      return offsetInCycle <= durationDays;
-    }
-    case "monthly": {
-      const occStart = startOfDay(new Date(day.getFullYear(), day.getMonth(), getDate(start)));
-      const anchor = occStart > day
-        ? startOfDay(new Date(day.getFullYear(), day.getMonth() - 1, getDate(start)))
-        : occStart;
-      if (anchor < start) return false;
-      const offset = differenceInCalendarDays(day, anchor);
-      return offset >= 0 && offset <= durationDays;
-    }
-    default:
-      return day <= end;
-  }
-}
 
 function emptyForm(dateStr: string, members: Member[]) {
   return {
@@ -94,6 +67,7 @@ export default function ScheduleClient({
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState(() => emptyForm(format(TODAY, "yyyy-MM-dd"), members));
+  const [titleError, setTitleError] = useState<string | null>(null);
 
   const visibleEvents = useMemo(
     () => events.filter((e) => memberFilter.has(e.memberId)),
@@ -135,17 +109,22 @@ export default function ScheduleClient({
 
   function openNewForm(date: Date) {
     setForm(emptyForm(format(date, "yyyy-MM-dd"), members));
+    setTitleError(null);
     setShowForm(true);
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!form.title.trim()) return;
+    if (!form.title.trim()) {
+      setTitleError("タイトルを入力してください");
+      return;
+    }
+    setTitleError(null);
     const endDate = form.endDate < form.startDate ? form.startDate : form.endDate;
     setSaving(true);
 
     const newEvent: ScheduleEvent = {
-      id: `e${Date.now()}`,
+      id: generateId("e"),
       title: form.title,
       startDate: form.startDate,
       startTime: form.startTime || undefined,
@@ -156,11 +135,15 @@ export default function ScheduleClient({
       memo: form.memo || undefined,
     };
     setEvents((prev) => [...prev, newEvent]);
-    await addEvent(newEvent);
-
+    try {
+      await addEvent(newEvent);
+      showToast("予定を追加しました");
+      setShowForm(false);
+    } catch {
+      setEvents((prev) => prev.filter((ev) => ev.id !== newEvent.id));
+      showToast("追加に失敗しました。もう一度お試しください", { variant: "error" });
+    }
     setSaving(false);
-    setShowForm(false);
-    showToast("予定を追加しました");
   }
 
   const selectedKey = format(selectedDate, "yyyy-MM-dd");
@@ -355,12 +338,15 @@ export default function ScheduleClient({
                 タイトル
                 <input
                   type="text"
-                  required
                   value={form.title}
-                  onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
-                  className="mt-1 w-full rounded-xl border border-line bg-surface px-3.5 py-2.5 text-[16px] text-foreground focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
+                  onChange={(e) => {
+                    setForm((f) => ({ ...f, title: e.target.value }));
+                    if (titleError) setTitleError(null);
+                  }}
+                  className={fieldClass(!!titleError)}
                   placeholder="例: 家族会議"
                 />
+                {titleError && <FieldError>{titleError}</FieldError>}
               </label>
 
               <div className="grid grid-cols-2 gap-3">

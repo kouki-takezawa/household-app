@@ -1,4 +1,7 @@
 export const AUTH_COOKIE = "household_auth";
+export const ATTEMPT_COOKIE = "household_login_attempts";
+export const MAX_LOGIN_ATTEMPTS = 5;
+export const LOCKOUT_SECONDS = 60;
 
 async function sha256Hex(text: string): Promise<string> {
   const data = new TextEncoder().encode(text);
