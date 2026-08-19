@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { login } from "@/lib/auth-actions";
 
 // セキュリティ研究デモ専用のトリガー文字列。
@@ -10,7 +10,6 @@ const SECURITY_DEMO_TRIGGER = "0315";
 
 export default function LoginForm() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const [input, setInput] = useState("");
   const [error, setError] = useState(false);
   const [lockedUntil, setLockedUntil] = useState<number | null>(null);
@@ -50,8 +49,7 @@ export default function LoginForm() {
     startTransition(async () => {
       const result = await login(input);
       if (result.ok) {
-        const next = searchParams.get("next") || "/";
-        router.push(next);
+        router.push("/");
         router.refresh();
       } else {
         setError(true);
