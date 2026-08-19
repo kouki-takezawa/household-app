@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
+import Link from "next/link";
 import {
   CartesianGrid,
   Cell,
@@ -20,18 +21,13 @@ import {
   ASSET_TYPE_LABEL as TYPE_LABEL,
   ASSET_TYPE_COLOR as TYPE_COLOR,
   formatYen,
-  todayStr,
 } from "@/lib/types";
-import { addAssetSnapshot, editAssetSnapshot, removeAssetSnapshot } from "@/lib/actions";
+import { EmptyState } from "@/components/EmptyState";
 
 function latestSnapshot(snapshots: AssetSnapshot[], accountId: string) {
   return snapshots
     .filter((s) => s.assetAccountId === accountId)
     .sort((a, b) => b.date.localeCompare(a.date))[0];
-}
-
-function emptyForm(accountId: string, today: string) {
-  return { assetAccountId: accountId, date: today, value: "", note: "" };
 }
 
 export default function AssetsClient({
@@ -41,12 +37,7 @@ export default function AssetsClient({
   accounts: AssetAccount[];
   initialSnapshots: AssetSnapshot[];
 }) {
-  const today = todayStr();
-  const [snapshots, setSnapshots] = useState<AssetSnapshot[]>(initialSnapshots);
-  const [showForm, setShowForm] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [saving, setSaving] = useState(false);
-  const [form, setForm] = useState(() => emptyForm(accounts[0]?.id ?? "", today));
+  const snapshots = initialSnapshots;
 
   const accountById = useMemo(() => {
     const map = new Map<string, AssetAccount>();
@@ -94,79 +85,25 @@ export default function AssetsClient({
   }, [snapshots, accounts]);
 
   const history = useMemo(
-    () => [...snapshots].sort((a, b) => b.date.localeCompare(a.date)),
+    () => [...snapshots].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 8),
     [snapshots]
   );
-
-  function openNewForm(accountId: string) {
-    setEditingId(null);
-    setForm(emptyForm(accountId, today));
-    setShowForm(true);
-  }
-
-  function openEditForm(snapshot: AssetSnapshot) {
-    setEditingId(snapshot.id);
-    setForm({
-      assetAccountId: snapshot.assetAccountId,
-      date: snapshot.date,
-      value: String(snapshot.value),
-      note: snapshot.note ?? "",
-    });
-    setShowForm(true);
-  }
-
-  async function handleDelete(id: string) {
-    if (!confirm("この記録を削除しますか？")) return;
-    setSnapshots((prev) => prev.filter((s) => s.id !== id));
-    await removeAssetSnapshot(id);
-  }
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const value = Number(form.value);
-    if (!value || value < 0) return;
-    setSaving(true);
-
-    if (editingId) {
-      const updated: AssetSnapshot = {
-        id: editingId,
-        assetAccountId: form.assetAccountId,
-        date: form.date,
-        value,
-        note: form.note || undefined,
-      };
-      setSnapshots((prev) => prev.map((s) => (s.id === editingId ? updated : s)));
-      await editAssetSnapshot(editingId, updated);
-    } else {
-      const newSnapshot: AssetSnapshot = {
-        id: `s${Date.now()}`,
-        assetAccountId: form.assetAccountId,
-        date: form.date,
-        value,
-        note: form.note || undefined,
-      };
-      setSnapshots((prev) => [...prev, newSnapshot]);
-      await addAssetSnapshot(newSnapshot);
-    }
-    setSaving(false);
-    setShowForm(false);
-  }
 
   return (
     <div className="flex flex-col gap-6">
       <section>
-        <h2 className="mb-2 px-1 text-[13px] font-semibold uppercase tracking-wide text-slate-400">
+        <h2 className="mb-2 px-1 text-[13px] font-semibold uppercase tracking-wide text-muted">
           資産総額
         </h2>
-        <div className="rounded-2xl bg-white p-4 shadow-[0_2px_20px_-6px_rgba(120,90,40,0.14)] ring-1 ring-black/[0.03]">
-          <p className="text-[26px] font-bold text-amber-700">{formatYen(total)}</p>
-          <p className="mt-1 text-[12px] text-slate-400">最新のスナップショット合計</p>
+        <div className="rounded-2xl bg-surface p-4 shadow-[0_2px_20px_-6px_rgba(120,90,40,0.14)] ring-1 ring-line-soft">
+          <p className="text-[26px] font-bold text-brand">{formatYen(total)}</p>
+          <p className="mt-1 text-[12px] text-muted">最新のスナップショット合計</p>
         </div>
       </section>
 
       {allocation.length > 0 && (
-        <section className="rounded-2xl bg-white p-4 shadow-[0_2px_20px_-6px_rgba(120,90,40,0.14)] ring-1 ring-black/[0.03]">
-          <h2 className="mb-2 text-[13px] font-semibold uppercase tracking-wide text-slate-400">
+        <section className="rounded-2xl bg-surface p-4 shadow-[0_2px_20px_-6px_rgba(120,90,40,0.14)] ring-1 ring-line-soft">
+          <h2 className="mb-2 text-[13px] font-semibold uppercase tracking-wide text-muted">
             資産配分
           </h2>
           <div className="h-56">
@@ -192,16 +129,16 @@ export default function AssetsClient({
         </section>
       )}
 
-      <section className="rounded-2xl bg-white p-4 shadow-[0_2px_20px_-6px_rgba(120,90,40,0.14)] ring-1 ring-black/[0.03]">
-        <h2 className="mb-2 text-[13px] font-semibold uppercase tracking-wide text-slate-400">
+      <section className="rounded-2xl bg-surface p-4 shadow-[0_2px_20px_-6px_rgba(120,90,40,0.14)] ring-1 ring-line-soft">
+        <h2 className="mb-2 text-[13px] font-semibold uppercase tracking-wide text-muted">
           資産推移
         </h2>
         <div className="h-56">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={trend}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-              <XAxis dataKey="date" fontSize={12} stroke="#94a3b8" />
-              <YAxis fontSize={12} stroke="#94a3b8" tickFormatter={(v) => `${v / 10000}万`} />
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--line)" />
+              <XAxis dataKey="date" fontSize={12} stroke="var(--muted)" />
+              <YAxis fontSize={12} stroke="var(--muted)" tickFormatter={(v) => `${v / 10000}万`} />
               <Tooltip formatter={(v) => formatYen(Number(v ?? 0))} />
               <Legend />
               <Line type="monotone" dataKey="資産合計" stroke="#d97706" strokeWidth={2.5} dot />
@@ -211,172 +148,78 @@ export default function AssetsClient({
       </section>
 
       <section>
-        <h2 className="mb-2 px-1 text-[13px] font-semibold uppercase tracking-wide text-slate-400">
+        <h2 className="mb-2 px-1 text-[13px] font-semibold uppercase tracking-wide text-muted">
           資産口座一覧
         </h2>
-        <div className="divide-y divide-slate-100 rounded-2xl bg-white shadow-[0_2px_20px_-6px_rgba(120,90,40,0.14)] ring-1 ring-black/[0.03]">
+        <div className="divide-y divide-line-soft rounded-2xl bg-surface shadow-[0_2px_20px_-6px_rgba(120,90,40,0.14)] ring-1 ring-line-soft">
           {latestByAccount.map(({ account, snapshot }) => (
-            <div key={account.id} className="flex items-center gap-3 p-3.5">
+            <Link
+              key={account.id}
+              href={`/assets/${account.id}`}
+              className="flex items-center gap-3 p-3.5 active:bg-track"
+            >
               <span
                 className="h-2.5 w-2.5 flex-shrink-0 rounded-full"
                 style={{ backgroundColor: TYPE_COLOR[account.type] }}
               />
               <div className="min-w-0 flex-1">
-                <p className="truncate text-[15px] font-medium text-slate-800">{account.name}</p>
-                <p className="text-[12px] text-slate-400">
+                <p className="truncate text-[15px] font-medium text-foreground">{account.name}</p>
+                <p className="text-[12px] text-muted">
                   {TYPE_LABEL[account.type]}
                   {snapshot ? ` ・ 最終更新 ${snapshot.date}` : " ・ 未記録"}
                 </p>
               </div>
-              <p className="text-[15px] font-semibold text-slate-900">
+              <p className="text-[15px] font-semibold text-foreground">
                 {snapshot ? formatYen(snapshot.value) : "―"}
               </p>
-              <button
-                type="button"
-                onClick={() => openNewForm(account.id)}
-                className="rounded-full px-2.5 py-1.5 text-[12px] font-medium text-amber-700 active:bg-amber-50"
-              >
-                記録
-              </button>
-            </div>
+              <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4 flex-shrink-0 text-muted">
+                <path d="m8 5 5 5-5 5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </Link>
           ))}
         </div>
       </section>
 
       <section>
-        <h2 className="mb-2 px-1 text-[13px] font-semibold uppercase tracking-wide text-slate-400">
-          記録履歴
+        <h2 className="mb-2 px-1 text-[13px] font-semibold uppercase tracking-wide text-muted">
+          最近の記録
         </h2>
-        <div className="divide-y divide-slate-100 rounded-2xl bg-white shadow-[0_2px_20px_-6px_rgba(120,90,40,0.14)] ring-1 ring-black/[0.03]">
+        <div className="divide-y divide-line-soft rounded-2xl bg-surface shadow-[0_2px_20px_-6px_rgba(120,90,40,0.14)] ring-1 ring-line-soft">
           {history.length === 0 && (
-            <p className="p-4 text-[13px] text-slate-400">記録はまだありません</p>
+            <EmptyState
+              icon={
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-5 w-5">
+                  <path d="M4 19V10M10 19V5M16 19v-7M21 19H3" />
+                </svg>
+              }
+              message="記録はまだありません"
+            />
           )}
           {history.map((s) => {
             const account = accountById.get(s.assetAccountId);
             return (
-              <div key={s.id} className="flex items-center gap-3 p-3.5">
+              <Link
+                key={s.id}
+                href={`/assets/${s.assetAccountId}`}
+                className="flex items-center gap-3 p-3.5 active:bg-track"
+              >
                 <span
                   className="h-2.5 w-2.5 flex-shrink-0 rounded-full"
                   style={{ backgroundColor: account ? TYPE_COLOR[account.type] : "#94a3b8" }}
                 />
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-[15px] font-medium text-slate-800">
+                  <p className="truncate text-[15px] font-medium text-foreground">
                     {account?.name ?? "不明な口座"}
                     {s.note ? ` ・ ${s.note}` : ""}
                   </p>
-                  <p className="text-[12px] text-slate-400">{s.date}</p>
+                  <p className="text-[12px] text-muted">{s.date}</p>
                 </div>
-                <p className="text-[15px] font-semibold text-slate-900">{formatYen(s.value)}</p>
-                <button
-                  type="button"
-                  onClick={() => openEditForm(s)}
-                  className="rounded-full px-2.5 py-1.5 text-[12px] text-slate-500 active:bg-slate-100"
-                >
-                  編集
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleDelete(s.id)}
-                  className="rounded-full px-2.5 py-1.5 text-[12px] text-rose-500 active:bg-rose-50"
-                >
-                  削除
-                </button>
-              </div>
+                <p className="text-[15px] font-semibold text-foreground">{formatYen(s.value)}</p>
+              </Link>
             );
           })}
         </div>
       </section>
-
-      {showForm && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 sm:items-center">
-          <form
-            onSubmit={handleSubmit}
-            className="w-full max-w-sm rounded-t-3xl bg-white px-5 pt-3 shadow-xl sm:rounded-3xl sm:pt-5"
-            style={{ paddingBottom: "calc(1.5rem + env(safe-area-inset-bottom))" }}
-          >
-            <div className="mx-auto mb-3 h-1.5 w-10 rounded-full bg-slate-300 sm:hidden" />
-            <h3 className="mb-4 text-[17px] font-bold text-slate-900">
-              {editingId ? "記録を編集" : "残高・評価額を記録"}
-            </h3>
-            <div className="flex flex-col gap-3">
-              <label className="text-[12px] text-slate-400">
-                資産口座
-                <select
-                  value={form.assetAccountId}
-                  onChange={(e) => setForm((f) => ({ ...f, assetAccountId: e.target.value }))}
-                  className="mt-1 w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-[16px] focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
-                >
-                  {accounts.map((a) => (
-                    <option key={a.id} value={a.id}>
-                      {a.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="text-[12px] text-slate-400">
-                日付
-                <input
-                  type="date"
-                  required
-                  value={form.date}
-                  onChange={(e) => setForm((f) => ({ ...f, date: e.target.value }))}
-                  className="mt-1 w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-[16px] focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
-                />
-              </label>
-              <label className="text-[12px] text-slate-400">
-                残高・評価額
-                <input
-                  type="number"
-                  required
-                  min={0}
-                  value={form.value}
-                  onChange={(e) => setForm((f) => ({ ...f, value: e.target.value }))}
-                  className="mt-1 w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-[16px] focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
-                  placeholder="0"
-                />
-              </label>
-              <label className="text-[12px] text-slate-400">
-                メモ
-                <input
-                  type="text"
-                  value={form.note}
-                  onChange={(e) => setForm((f) => ({ ...f, note: e.target.value }))}
-                  className="mt-1 w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-[16px] focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
-                  placeholder="任意"
-                />
-              </label>
-            </div>
-            <div className="mt-5 flex gap-2">
-              {editingId && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowForm(false);
-                    handleDelete(editingId);
-                  }}
-                  className="rounded-full border border-rose-200 px-4 py-3 text-[15px] font-semibold text-rose-500 active:bg-rose-50"
-                >
-                  削除
-                </button>
-              )}
-              <button
-                type="button"
-                onClick={() => setShowForm(false)}
-                className="flex-1 rounded-full border border-slate-200 py-3 text-[15px] font-semibold text-slate-600 active:bg-slate-50"
-              >
-                キャンセル
-              </button>
-              <button
-                type="submit"
-                disabled={saving}
-                className="flex-1 rounded-full bg-amber-600 py-3 text-[15px] font-semibold text-white shadow-sm shadow-amber-600/30 transition-transform active:scale-[0.98] disabled:opacity-60"
-              >
-                {saving ? "保存中…" : "保存"}
-              </button>
-            </div>
-          </form>
-        </div>
-      )}
     </div>
   );
 }

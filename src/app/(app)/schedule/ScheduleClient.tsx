@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import {
   addDays,
   addMonths,
@@ -27,7 +28,9 @@ import {
   formatEventSchedule,
   todayStr,
 } from "@/lib/types";
-import { addEvent, editEvent, removeEvent } from "@/lib/actions";
+import { addEvent } from "@/lib/actions";
+import { EmptyState } from "@/components/EmptyState";
+import { useToast } from "@/components/Toast";
 
 const WEEKDAYS = ["日", "月", "火", "水", "木", "金", "土"];
 
@@ -79,6 +82,7 @@ export default function ScheduleClient({
   initialEvents: ScheduleEvent[];
 }) {
   const TODAY = useMemo(() => parseISO(todayStr()), []);
+  const showToast = useToast();
 
   const [events, setEvents] = useState<ScheduleEvent[]>(initialEvents);
   const [viewMode, setViewMode] = useState<"month" | "week">("month");
@@ -88,7 +92,6 @@ export default function ScheduleClient({
     new Set(members.map((m) => m.id))
   );
   const [showForm, setShowForm] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState(() => emptyForm(format(TODAY, "yyyy-MM-dd"), members));
 
@@ -131,31 +134,8 @@ export default function ScheduleClient({
   }
 
   function openNewForm(date: Date) {
-    setEditingId(null);
     setForm(emptyForm(format(date, "yyyy-MM-dd"), members));
     setShowForm(true);
-  }
-
-  function openEditForm(event: ScheduleEvent) {
-    setEditingId(event.id);
-    setForm({
-      title: event.title,
-      startDate: event.startDate,
-      startTime: event.startTime ?? "",
-      endDate: event.endDate,
-      endTime: event.endTime ?? "",
-      memberId: event.memberId,
-      recurrence: event.recurrence ?? "none",
-      memo: event.memo ?? "",
-    });
-    setShowForm(true);
-  }
-
-  async function handleDelete(id: string) {
-    if (!confirm("この予定を削除しますか？")) return;
-    setEvents((prev) => prev.filter((e) => e.id !== id));
-    setShowForm(false);
-    await removeEvent(id);
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -164,37 +144,23 @@ export default function ScheduleClient({
     const endDate = form.endDate < form.startDate ? form.startDate : form.endDate;
     setSaving(true);
 
-    if (editingId) {
-      const updated: ScheduleEvent = {
-        id: editingId,
-        title: form.title,
-        startDate: form.startDate,
-        startTime: form.startTime || undefined,
-        endDate,
-        endTime: form.endTime || undefined,
-        memberId: form.memberId,
-        recurrence: form.recurrence,
-        memo: form.memo || undefined,
-      };
-      setEvents((prev) => prev.map((ev) => (ev.id === editingId ? updated : ev)));
-      await editEvent(editingId, updated);
-    } else {
-      const newEvent: ScheduleEvent = {
-        id: `e${Date.now()}`,
-        title: form.title,
-        startDate: form.startDate,
-        startTime: form.startTime || undefined,
-        endDate,
-        endTime: form.endTime || undefined,
-        memberId: form.memberId,
-        recurrence: form.recurrence,
-        memo: form.memo || undefined,
-      };
-      setEvents((prev) => [...prev, newEvent]);
-      await addEvent(newEvent);
-    }
+    const newEvent: ScheduleEvent = {
+      id: `e${Date.now()}`,
+      title: form.title,
+      startDate: form.startDate,
+      startTime: form.startTime || undefined,
+      endDate,
+      endTime: form.endTime || undefined,
+      memberId: form.memberId,
+      recurrence: form.recurrence,
+      memo: form.memo || undefined,
+    };
+    setEvents((prev) => [...prev, newEvent]);
+    await addEvent(newEvent);
+
     setSaving(false);
     setShowForm(false);
+    showToast("予定を追加しました");
   }
 
   const selectedKey = format(selectedDate, "yyyy-MM-dd");
@@ -211,11 +177,11 @@ export default function ScheduleClient({
                 ? setCursor((c) => subMonths(c, 1))
                 : setSelectedDate((d) => addDays(d, -7))
             }
-            className="flex h-9 w-9 items-center justify-center rounded-full text-amber-700 active:bg-slate-100"
+            className="flex h-9 w-9 items-center justify-center rounded-full text-brand active:bg-track"
           >
             ‹
           </button>
-          <p className="w-28 text-center text-[15px] font-semibold text-slate-900">
+          <p className="w-28 text-center text-[15px] font-semibold text-foreground">
             {format(viewMode === "month" ? cursor : selectedDate, "yyyy年M月", { locale: ja })}
           </p>
           <button
@@ -225,18 +191,18 @@ export default function ScheduleClient({
                 ? setCursor((c) => addMonths(c, 1))
                 : setSelectedDate((d) => addDays(d, 7))
             }
-            className="flex h-9 w-9 items-center justify-center rounded-full text-amber-700 active:bg-slate-100"
+            className="flex h-9 w-9 items-center justify-center rounded-full text-brand active:bg-track"
           >
             ›
           </button>
         </div>
-        <div className="flex gap-1 rounded-xl bg-slate-100 p-1 text-[13px]">
+        <div className="flex gap-1 rounded-xl bg-track p-1 text-[13px]">
           <button
             type="button"
             onClick={() => setViewMode("month")}
             className={clsx(
               "rounded-lg px-3 py-1.5 font-semibold transition-colors",
-              viewMode === "month" ? "bg-white text-amber-700 shadow-sm" : "text-slate-500"
+              viewMode === "month" ? "bg-surface text-brand shadow-sm" : "text-subtle"
             )}
           >
             月
@@ -246,7 +212,7 @@ export default function ScheduleClient({
             onClick={() => setViewMode("week")}
             className={clsx(
               "rounded-lg px-3 py-1.5 font-semibold transition-colors",
-              viewMode === "week" ? "bg-white text-amber-700 shadow-sm" : "text-slate-500"
+              viewMode === "week" ? "bg-surface text-brand shadow-sm" : "text-subtle"
             )}
           >
             週
@@ -262,7 +228,7 @@ export default function ScheduleClient({
             onClick={() => toggleMember(m.id)}
             className={clsx(
               "flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[12px] font-medium transition-opacity",
-              memberFilter.has(m.id) ? "border-slate-200 bg-white" : "border-slate-100 opacity-40"
+              memberFilter.has(m.id) ? "border-line bg-surface" : "border-line-soft opacity-40"
             )}
           >
             <span className="h-2 w-2 rounded-full" style={{ backgroundColor: m.color }} />
@@ -271,8 +237,8 @@ export default function ScheduleClient({
         ))}
       </section>
 
-      <section className="rounded-2xl bg-white p-3 shadow-[0_2px_20px_-6px_rgba(120,90,40,0.14)] ring-1 ring-black/[0.03]">
-        <div className="grid grid-cols-7 gap-1 text-center text-[11px] text-slate-400">
+      <section className="rounded-2xl bg-surface p-3 shadow-[0_2px_20px_-6px_rgba(120,90,40,0.14)] ring-1 ring-line-soft">
+        <div className="grid grid-cols-7 gap-1 text-center text-[11px] text-muted">
           {WEEKDAYS.map((w) => (
             <div key={w} className="py-1">
               {w}
@@ -293,7 +259,7 @@ export default function ScheduleClient({
                 onClick={() => setSelectedDate(day)}
                 className={clsx(
                   "flex min-h-[3.4rem] flex-col items-center rounded-xl p-1 text-xs transition-colors",
-                  selected ? "bg-amber-50 ring-1 ring-amber-400" : "active:bg-slate-50",
+                  selected ? "bg-amber-500/10 ring-1 ring-amber-400" : "active:bg-track",
                   !inMonth && "opacity-30"
                 )}
               >
@@ -322,7 +288,7 @@ export default function ScheduleClient({
 
       <section>
         <div className="mb-2 flex items-center justify-between px-1">
-          <h2 className="text-[13px] font-semibold uppercase tracking-wide text-slate-400">
+          <h2 className="text-[13px] font-semibold uppercase tracking-wide text-muted">
             {format(selectedDate, "M月d日(E)", { locale: ja })}の予定
           </h2>
           <button
@@ -333,33 +299,43 @@ export default function ScheduleClient({
             ＋ 予定を追加
           </button>
         </div>
-        <div className="divide-y divide-slate-100 rounded-2xl bg-white shadow-[0_2px_20px_-6px_rgba(120,90,40,0.14)] ring-1 ring-black/[0.03]">
+        <div className="divide-y divide-line-soft rounded-2xl bg-surface shadow-[0_2px_20px_-6px_rgba(120,90,40,0.14)] ring-1 ring-line-soft">
           {selectedDayEvents.length === 0 && (
-            <p className="p-4 text-[13px] text-slate-400">予定はありません</p>
+            <EmptyState
+              icon={
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-5 w-5">
+                  <rect x="3.5" y="5.5" width="17" height="15" rx="2.5" />
+                  <path d="M3.5 9.5h17M8 3v4M16 3v4" />
+                </svg>
+              }
+              message="この日の予定はありません"
+            />
           )}
           {selectedDayEvents.map((event) => {
             const member = findMemberById(members, event.memberId);
             return (
-              <button
-                type="button"
+              <Link
                 key={event.id}
-                onClick={() => openEditForm(event)}
-                className="flex w-full items-center gap-3 p-3.5 text-left active:bg-slate-50"
+                href={`/schedule/${event.id}`}
+                className="flex w-full items-center gap-3 p-3.5 text-left active:bg-track"
               >
                 <span
                   className="h-2.5 w-2.5 flex-shrink-0 rounded-full"
                   style={{ backgroundColor: member?.color }}
                 />
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-[15px] font-medium text-slate-800">{event.title}</p>
-                  <p className="text-[12px] text-slate-400">
+                  <p className="truncate text-[15px] font-medium text-foreground">{event.title}</p>
+                  <p className="text-[12px] text-muted">
                     {formatEventSchedule(event)} ・ {member?.name}
                     {event.recurrence && event.recurrence !== "none"
                       ? ` ・ ${event.recurrence === "weekly" ? "毎週" : "毎月"}`
                       : ""}
                   </p>
                 </div>
-              </button>
+                <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4 flex-shrink-0 text-muted">
+                  <path d="m8 5 5 5-5 5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </Link>
             );
           })}
         </div>
@@ -369,28 +345,26 @@ export default function ScheduleClient({
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 sm:items-center">
           <form
             onSubmit={handleSubmit}
-            className="w-full max-w-sm rounded-t-3xl bg-white px-5 pt-3 shadow-xl sm:rounded-3xl sm:pt-5"
+            className="w-full max-w-sm rounded-t-3xl bg-surface px-5 pt-3 shadow-xl sm:rounded-3xl sm:pt-5"
             style={{ paddingBottom: "calc(1.5rem + env(safe-area-inset-bottom))" }}
           >
-            <div className="mx-auto mb-3 h-1.5 w-10 rounded-full bg-slate-300 sm:hidden" />
-            <h3 className="mb-4 text-[17px] font-bold text-slate-900">
-              {editingId ? "予定を編集" : "予定を追加"}
-            </h3>
+            <div className="mx-auto mb-3 h-1.5 w-10 rounded-full bg-line sm:hidden" />
+            <h3 className="mb-4 text-[17px] font-bold text-foreground">予定を追加</h3>
             <div className="flex flex-col gap-3">
-              <label className="text-[12px] text-slate-400">
+              <label className="text-[12px] text-muted">
                 タイトル
                 <input
                   type="text"
                   required
                   value={form.title}
                   onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
-                  className="mt-1 w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-[16px] focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
+                  className="mt-1 w-full rounded-xl border border-line bg-surface px-3.5 py-2.5 text-[16px] text-foreground focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
                   placeholder="例: 家族会議"
                 />
               </label>
 
               <div className="grid grid-cols-2 gap-3">
-                <label className="text-[12px] text-slate-400">
+                <label className="text-[12px] text-muted">
                   開始日
                   <input
                     type="date"
@@ -403,22 +377,22 @@ export default function ScheduleClient({
                         endDate: f.endDate < e.target.value ? e.target.value : f.endDate,
                       }))
                     }
-                    className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-[16px] focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
+                    className="mt-1 w-full rounded-xl border border-line bg-surface px-3 py-2.5 text-[16px] text-foreground focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
                   />
                 </label>
-                <label className="text-[12px] text-slate-400">
+                <label className="text-[12px] text-muted">
                   開始時刻（任意）
                   <input
                     type="time"
                     value={form.startTime}
                     onChange={(e) => setForm((f) => ({ ...f, startTime: e.target.value }))}
-                    className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-[16px] focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
+                    className="mt-1 w-full rounded-xl border border-line bg-surface px-3 py-2.5 text-[16px] text-foreground focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
                   />
                 </label>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
-                <label className="text-[12px] text-slate-400">
+                <label className="text-[12px] text-muted">
                   終了日
                   <input
                     type="date"
@@ -426,29 +400,29 @@ export default function ScheduleClient({
                     min={form.startDate}
                     value={form.endDate}
                     onChange={(e) => setForm((f) => ({ ...f, endDate: e.target.value }))}
-                    className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-[16px] focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
+                    className="mt-1 w-full rounded-xl border border-line bg-surface px-3 py-2.5 text-[16px] text-foreground focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
                   />
                 </label>
-                <label className="text-[12px] text-slate-400">
+                <label className="text-[12px] text-muted">
                   終了時刻（任意）
                   <input
                     type="time"
                     value={form.endTime}
                     onChange={(e) => setForm((f) => ({ ...f, endTime: e.target.value }))}
-                    className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-[16px] focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
+                    className="mt-1 w-full rounded-xl border border-line bg-surface px-3 py-2.5 text-[16px] text-foreground focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
                   />
                 </label>
               </div>
-              <p className="-mt-1 text-[11px] text-slate-400">
+              <p className="-mt-1 text-[11px] text-muted">
                 終了日を開始日より後にすると、その期間すべての日にこの予定が表示されます。
               </p>
 
-              <label className="text-[12px] text-slate-400">
+              <label className="text-[12px] text-muted">
                 メンバー
                 <select
                   value={form.memberId}
                   onChange={(e) => setForm((f) => ({ ...f, memberId: e.target.value }))}
-                  className="mt-1 w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-[16px] focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
+                  className="mt-1 w-full rounded-xl border border-line bg-surface px-3.5 py-2.5 text-[16px] text-foreground focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
                 >
                   {members.map((m) => (
                     <option key={m.id} value={m.id}>
@@ -457,7 +431,7 @@ export default function ScheduleClient({
                   ))}
                 </select>
               </label>
-              <label className="text-[12px] text-slate-400">
+              <label className="text-[12px] text-muted">
                 繰り返し
                 <select
                   value={form.recurrence}
@@ -467,39 +441,30 @@ export default function ScheduleClient({
                       recurrence: e.target.value as ScheduleEvent["recurrence"],
                     }))
                   }
-                  className="mt-1 w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-[16px] focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
+                  className="mt-1 w-full rounded-xl border border-line bg-surface px-3.5 py-2.5 text-[16px] text-foreground focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
                 >
                   <option value="none">なし</option>
                   <option value="weekly">毎週</option>
                   <option value="monthly">毎月</option>
                 </select>
               </label>
-              <label className="text-[12px] text-slate-400">
+              <label className="text-[12px] text-muted">
                 メモ
                 <input
                   type="text"
                   value={form.memo}
                   onChange={(e) => setForm((f) => ({ ...f, memo: e.target.value }))}
-                  className="mt-1 w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-[16px] focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
+                  className="mt-1 w-full rounded-xl border border-line bg-surface px-3.5 py-2.5 text-[16px] text-foreground focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
                   placeholder="任意"
                 />
               </label>
             </div>
 
             <div className="mt-5 flex gap-2">
-              {editingId && (
-                <button
-                  type="button"
-                  onClick={() => handleDelete(editingId)}
-                  className="rounded-full border border-rose-200 px-4 py-3 text-[15px] font-semibold text-rose-500 active:bg-rose-50"
-                >
-                  削除
-                </button>
-              )}
               <button
                 type="button"
                 onClick={() => setShowForm(false)}
-                className="flex-1 rounded-full border border-slate-200 py-3 text-[15px] font-semibold text-slate-600 active:bg-slate-50"
+                className="flex-1 rounded-full border border-line py-3 text-[15px] font-semibold text-subtle active:opacity-70"
               >
                 キャンセル
               </button>

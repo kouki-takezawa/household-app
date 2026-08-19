@@ -41,7 +41,7 @@ export default function LoginForm() {
 
   return (
     <div
-      className="flex min-h-screen flex-col items-center justify-center bg-[var(--background)] px-6"
+      className="flex min-h-screen flex-col items-center justify-center bg-background px-6"
       style={{
         paddingTop: "env(safe-area-inset-top)",
         paddingBottom: "env(safe-area-inset-bottom)",
@@ -50,10 +50,10 @@ export default function LoginForm() {
       <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-amber-600 text-3xl shadow-lg shadow-amber-600/30">
         🏡
       </div>
-      <h1 className="mb-1 text-center text-xl font-bold text-slate-900">
+      <h1 className="mb-1 text-center text-xl font-bold text-foreground">
         わが家の家計・資産管理
       </h1>
-      <p className="mb-8 text-center text-sm text-slate-400">
+      <p className="mb-8 text-center text-sm text-muted">
         合言葉を入力してください
       </p>
       <form onSubmit={handleSubmit} className="w-full max-w-xs">
@@ -66,10 +66,10 @@ export default function LoginForm() {
             setInput(e.target.value);
             setError(false);
           }}
-          className={`w-full rounded-2xl border bg-white px-4 py-3.5 text-center text-2xl tracking-[0.5em] shadow-sm focus:outline-none focus:ring-2 ${
+          className={`w-full rounded-2xl border bg-surface px-4 py-3.5 text-center text-2xl tracking-[0.5em] text-foreground shadow-sm focus:outline-none focus:ring-2 ${
             error
               ? "border-rose-400 focus:ring-rose-400"
-              : "border-slate-200 focus:ring-amber-500"
+              : "border-line focus:ring-amber-500"
           }`}
           placeholder="••••"
         />
