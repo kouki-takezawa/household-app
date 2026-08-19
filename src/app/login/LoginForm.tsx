@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { login } from "@/lib/auth-actions";
 
@@ -13,11 +13,32 @@ export default function LoginForm() {
   const searchParams = useSearchParams();
   const [input, setInput] = useState("");
   const [error, setError] = useState(false);
+  const [lockedUntil, setLockedUntil] = useState<number | null>(null);
+  const [remainingSeconds, setRemainingSeconds] = useState(0);
   const [pending, startTransition] = useTransition();
   const [showSecurityDemo, setShowSecurityDemo] = useState(false);
 
+  useEffect(() => {
+    if (!lockedUntil) return;
+    const tick = () => {
+      const remaining = Math.ceil((lockedUntil - Date.now()) / 1000);
+      if (remaining <= 0) {
+        setLockedUntil(null);
+        setRemainingSeconds(0);
+      } else {
+        setRemainingSeconds(remaining);
+      }
+    };
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, [lockedUntil]);
+
+  const locked = lockedUntil !== null && remainingSeconds > 0;
+
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (locked) return;
 
     if (input === SECURITY_DEMO_TRIGGER) {
       // ここではサーバーへの通信は一切発生しない（純粋にクライアント側の表示のみ）。
@@ -35,6 +56,9 @@ export default function LoginForm() {
       } else {
         setError(true);
         setInput("");
+        if (result.locked) {
+          setLockedUntil(Date.now() + result.retryAfterSeconds * 1000);
+        }
       }
     });
   }
@@ -75,15 +99,17 @@ export default function LoginForm() {
         />
         {error && (
           <p className="mt-3 text-center text-sm text-rose-500">
-            合言葉が違います
+            {locked
+              ? `試行回数の上限に達しました。${remainingSeconds}秒後にもう一度お試しください`
+              : "合言葉が違います"}
           </p>
         )}
         <button
           type="submit"
-          disabled={pending}
+          disabled={pending || locked}
           className="mt-4 w-full rounded-full bg-amber-600 py-3.5 text-[15px] font-semibold text-white shadow-sm shadow-amber-600/30 transition-transform active:scale-[0.98] active:bg-amber-700 disabled:opacity-60"
         >
-          {pending ? "確認中…" : "ログイン"}
+          {locked ? `${remainingSeconds}秒後に再試行` : pending ? "確認中…" : "ログイン"}
         </button>
       </form>
 

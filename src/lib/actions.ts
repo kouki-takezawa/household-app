@@ -107,3 +107,97 @@ export async function removeCategory(id: string) {
   await gas.deleteRow("Categories", id);
   revalidateAll();
 }
+
+// ---- 横断検索 --------------------------------------------------------
+
+export type SearchResults = {
+  transactions: {
+    id: string;
+    date: string;
+    amount: number;
+    type: "income" | "expense";
+    categoryName: string;
+    memo?: string;
+  }[];
+  events: {
+    id: string;
+    title: string;
+    startDate: string;
+    memberName?: string;
+  }[];
+  snapshots: {
+    id: string;
+    accountId: string;
+    accountName: string;
+    date: string;
+    value: number;
+    note?: string;
+  }[];
+};
+
+export async function searchAll(query: string): Promise<SearchResults> {
+  const q = query.trim().toLowerCase();
+  if (!q) return { transactions: [], events: [], snapshots: [] };
+
+  const [transactions, events, snapshots, categories, members, accounts] = await Promise.all([
+    gas.getTransactions(),
+    gas.getEvents(),
+    gas.getAssetSnapshots(),
+    gas.getCategories(),
+    gas.getMembers(),
+    gas.getAssetAccounts(),
+  ]);
+
+  const categoryName = (id: string) => categories.find((c) => c.id === id)?.name ?? "その他";
+  const memberName = (id?: string) => members.find((m) => m.id === id)?.name;
+  const accountName = (id: string) => accounts.find((a) => a.id === id)?.name ?? "不明な口座";
+
+  const matchedTransactions = transactions
+    .filter(
+      (t) =>
+        (t.memo ?? "").toLowerCase().includes(q) ||
+        categoryName(t.categoryId).toLowerCase().includes(q)
+    )
+    .sort((a, b) => b.date.localeCompare(a.date))
+    .slice(0, 8)
+    .map((t) => ({
+      id: t.id,
+      date: t.date,
+      amount: t.amount,
+      type: t.type,
+      categoryName: categoryName(t.categoryId),
+      memo: t.memo,
+    }));
+
+  const matchedEvents = events
+    .filter(
+      (e) => e.title.toLowerCase().includes(q) || (e.memo ?? "").toLowerCase().includes(q)
+    )
+    .sort((a, b) => b.startDate.localeCompare(a.startDate))
+    .slice(0, 8)
+    .map((e) => ({
+      id: e.id,
+      title: e.title,
+      startDate: e.startDate,
+      memberName: memberName(e.memberId),
+    }));
+
+  const matchedSnapshots = snapshots
+    .filter(
+      (s) =>
+        (s.note ?? "").toLowerCase().includes(q) ||
+        accountName(s.assetAccountId).toLowerCase().includes(q)
+    )
+    .sort((a, b) => b.date.localeCompare(a.date))
+    .slice(0, 8)
+    .map((s) => ({
+      id: s.id,
+      accountId: s.assetAccountId,
+      accountName: accountName(s.assetAccountId),
+      date: s.date,
+      value: s.value,
+      note: s.note,
+    }));
+
+  return { transactions: matchedTransactions, events: matchedEvents, snapshots: matchedSnapshots };
+}

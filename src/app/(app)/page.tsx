@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { EmptyState } from "@/components/EmptyState";
+import { GlobalSearch } from "@/components/GlobalSearch";
 import {
   getTransactions,
   getEvents,
@@ -7,56 +8,13 @@ import {
   getAssetSnapshots,
   getMembers,
 } from "@/lib/gas";
+import { findMemberById, formatYen, formatEventSchedule, todayStr } from "@/lib/types";
 import {
-  findMemberById,
-  formatYen,
-  formatEventSchedule,
-  todayStr,
-  type ScheduleEvent,
-} from "@/lib/types";
-
-function monthlySummary(
-  transactions: Awaited<ReturnType<typeof getTransactions>>,
-  currentMonth: string
-) {
-  const thisMonth = transactions.filter((t) => t.date.startsWith(currentMonth));
-  const income = thisMonth
-    .filter((t) => t.type === "income")
-    .reduce((sum, t) => sum + t.amount, 0);
-  const expense = thisMonth
-    .filter((t) => t.type === "expense")
-    .reduce((sum, t) => sum + t.amount, 0);
-  return { income, expense, balance: income - expense };
-}
-
-function upcomingEvents(events: ScheduleEvent[], today: string, limit = 4) {
-  return [...events]
-    .filter((e) => e.endDate >= today)
-    .sort((a, b) => a.startDate.localeCompare(b.startDate))
-    .slice(0, limit);
-}
-
-function totalAssetsAsOf(
-  accounts: Awaited<ReturnType<typeof getAssetAccounts>>,
-  snapshots: Awaited<ReturnType<typeof getAssetSnapshots>>,
-  asOfDate: string
-) {
-  let total = 0;
-  for (const account of accounts) {
-    const snapshotsForAccount = snapshots
-      .filter((s) => s.assetAccountId === account.id && s.date <= asOfDate)
-      .sort((a, b) => b.date.localeCompare(a.date));
-    if (snapshotsForAccount[0]) total += snapshotsForAccount[0].value;
-  }
-  return total;
-}
-
-/** "2026-08" のような年月文字列を delta ヶ月分ずらす */
-function shiftMonthStr(monthStr: string, delta: number): string {
-  const [y, m] = monthStr.split("-").map(Number);
-  const d = new Date(y, m - 1 + delta, 1);
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-}
+  monthlySummary,
+  upcomingEvents,
+  totalAssetsAsOf,
+  shiftMonthStr,
+} from "@/lib/dashboard";
 
 export default async function HomePage() {
   const [transactions, events, accounts, snapshots, members] = await Promise.all([
@@ -82,6 +40,8 @@ export default async function HomePage() {
 
   return (
     <div className="flex flex-col gap-7">
+      <GlobalSearch />
+
       <section>
         <p className="px-1 text-[13px] font-medium text-muted">資産総額</p>
         <div className="mt-2 rounded-[28px] bg-surface p-6 shadow-[0_4px_28px_-6px_rgba(120,90,40,0.18)] ring-1 ring-line-soft">

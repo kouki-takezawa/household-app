@@ -18,6 +18,9 @@ import {
 } from "@/lib/actions";
 import { EmptyState } from "@/components/EmptyState";
 import { useToast } from "@/components/Toast";
+import { useConfirm } from "@/components/ConfirmDialog";
+import { fieldClass, FieldError } from "@/components/form";
+import { generateId } from "@/lib/id";
 
 const COLOR_OPTIONS = [
   "#10b981",
@@ -42,6 +45,7 @@ export default function SettingsClient({
   initialAssetAccounts: AssetAccount[];
 }) {
   const showToast = useToast();
+  const confirmDialog = useConfirm();
   const [tab, setTab] = useState<"members" | "categories" | "assets">("members");
   const [members, setMembers] = useState<Member[]>(initialMembers);
   const [categories, setCategories] = useState<Category[]>(initialCategories);
@@ -49,74 +53,170 @@ export default function SettingsClient({
 
   const [memberName, setMemberName] = useState("");
   const [memberColor, setMemberColor] = useState(COLOR_OPTIONS[0]);
+  const [memberNameError, setMemberNameError] = useState<string | null>(null);
 
   const [categoryName, setCategoryName] = useState("");
   const [categoryType, setCategoryType] = useState<Category["type"]>("expense");
   const [categoryColor, setCategoryColor] = useState(COLOR_OPTIONS[0]);
+  const [categoryNameError, setCategoryNameError] = useState<string | null>(null);
 
   const [accountName, setAccountName] = useState("");
   const [accountType, setAccountType] = useState<AssetAccount["type"]>("bank");
   const [accountMemberId, setAccountMemberId] = useState("");
+  const [accountNameError, setAccountNameError] = useState<string | null>(null);
 
   async function addMember(e: React.FormEvent) {
     e.preventDefault();
-    if (!memberName.trim()) return;
-    const newMember: Member = { id: `m${Date.now()}`, name: memberName.trim(), color: memberColor };
+    if (!memberName.trim()) {
+      setMemberNameError("名前を入力してください");
+      return;
+    }
+    setMemberNameError(null);
+    const newMember: Member = { id: generateId("m"), name: memberName.trim(), color: memberColor };
     setMembers((prev) => [...prev, newMember]);
     setMemberName("");
-    await addMemberAction(newMember);
-    showToast("メンバーを追加しました");
+    try {
+      await addMemberAction(newMember);
+      showToast("メンバーを追加しました");
+    } catch {
+      setMembers((prev) => prev.filter((m) => m.id !== newMember.id));
+      showToast("追加に失敗しました。もう一度お試しください", { variant: "error" });
+    }
   }
 
-  async function removeMember(id: string) {
-    if (!confirm("このメンバーを削除しますか？\n過去の予定などに紐づいている場合、表示に影響することがあります。")) return;
-    setMembers((prev) => prev.filter((m) => m.id !== id));
-    await removeMemberAction(id);
-    showToast("削除しました");
+  async function removeMember(target: Member) {
+    const ok = await confirmDialog({
+      title: "このメンバーを削除しますか？",
+      description: "過去の予定などに紐づいている場合、表示に影響することがあります。",
+      danger: true,
+    });
+    if (!ok) return;
+
+    setMembers((prev) => prev.filter((m) => m.id !== target.id));
+    try {
+      await removeMemberAction(target.id);
+      showToast("削除しました", {
+        actionLabel: "元に戻す",
+        onAction: async () => {
+          setMembers((prev) => [...prev, target]);
+          try {
+            await addMemberAction(target);
+          } catch {
+            setMembers((prev) => prev.filter((m) => m.id !== target.id));
+            showToast("元に戻せませんでした", { variant: "error" });
+          }
+        },
+      });
+    } catch {
+      setMembers((prev) => [...prev, target]);
+      showToast("削除に失敗しました。もう一度お試しください", { variant: "error" });
+    }
   }
 
   async function addCategory(e: React.FormEvent) {
     e.preventDefault();
-    if (!categoryName.trim()) return;
+    if (!categoryName.trim()) {
+      setCategoryNameError("カテゴリ名を入力してください");
+      return;
+    }
+    setCategoryNameError(null);
     const newCategory: Category = {
-      id: `c${Date.now()}`,
+      id: generateId("c"),
       name: categoryName.trim(),
       type: categoryType,
       color: categoryColor,
     };
     setCategories((prev) => [...prev, newCategory]);
     setCategoryName("");
-    await addCategoryAction(newCategory);
-    showToast("カテゴリを追加しました");
+    try {
+      await addCategoryAction(newCategory);
+      showToast("カテゴリを追加しました");
+    } catch {
+      setCategories((prev) => prev.filter((c) => c.id !== newCategory.id));
+      showToast("追加に失敗しました。もう一度お試しください", { variant: "error" });
+    }
   }
 
-  async function removeCategory(id: string) {
-    if (!confirm("このカテゴリを削除しますか？\n過去の記録などに紐づいている場合、表示に影響することがあります。")) return;
-    setCategories((prev) => prev.filter((c) => c.id !== id));
-    await removeCategoryAction(id);
-    showToast("削除しました");
+  async function removeCategory(target: Category) {
+    const ok = await confirmDialog({
+      title: "このカテゴリを削除しますか？",
+      description: "過去の記録などに紐づいている場合、表示に影響することがあります。",
+      danger: true,
+    });
+    if (!ok) return;
+
+    setCategories((prev) => prev.filter((c) => c.id !== target.id));
+    try {
+      await removeCategoryAction(target.id);
+      showToast("削除しました", {
+        actionLabel: "元に戻す",
+        onAction: async () => {
+          setCategories((prev) => [...prev, target]);
+          try {
+            await addCategoryAction(target);
+          } catch {
+            setCategories((prev) => prev.filter((c) => c.id !== target.id));
+            showToast("元に戻せませんでした", { variant: "error" });
+          }
+        },
+      });
+    } catch {
+      setCategories((prev) => [...prev, target]);
+      showToast("削除に失敗しました。もう一度お試しください", { variant: "error" });
+    }
   }
 
   async function addAssetAccount(e: React.FormEvent) {
     e.preventDefault();
-    if (!accountName.trim()) return;
+    if (!accountName.trim()) {
+      setAccountNameError("口座名を入力してください");
+      return;
+    }
+    setAccountNameError(null);
     const newAccount: AssetAccount = {
-      id: `a${Date.now()}`,
+      id: generateId("a"),
       name: accountName.trim(),
       type: accountType,
       memberId: accountMemberId || undefined,
     };
     setAssetAccounts((prev) => [...prev, newAccount]);
     setAccountName("");
-    await addAssetAccountAction(newAccount);
-    showToast("資産口座を追加しました");
+    try {
+      await addAssetAccountAction(newAccount);
+      showToast("資産口座を追加しました");
+    } catch {
+      setAssetAccounts((prev) => prev.filter((a) => a.id !== newAccount.id));
+      showToast("追加に失敗しました。もう一度お試しください", { variant: "error" });
+    }
   }
 
-  async function removeAssetAccount(id: string) {
-    if (!confirm("この資産口座を削除しますか？\nこの口座の残高記録も資産管理画面から見えなくなります。")) return;
-    setAssetAccounts((prev) => prev.filter((a) => a.id !== id));
-    await removeAssetAccountAction(id);
-    showToast("削除しました");
+  async function removeAssetAccount(target: AssetAccount) {
+    const ok = await confirmDialog({
+      title: "この資産口座を削除しますか？",
+      description: "この口座の残高記録も資産管理画面から見えなくなります。",
+      danger: true,
+    });
+    if (!ok) return;
+
+    setAssetAccounts((prev) => prev.filter((a) => a.id !== target.id));
+    try {
+      await removeAssetAccountAction(target.id);
+      showToast("削除しました", {
+        actionLabel: "元に戻す",
+        onAction: async () => {
+          setAssetAccounts((prev) => [...prev, target]);
+          try {
+            await addAssetAccountAction(target);
+          } catch {
+            setAssetAccounts((prev) => prev.filter((a) => a.id !== target.id));
+            showToast("元に戻せませんでした", { variant: "error" });
+          }
+        },
+      });
+    } catch {
+      setAssetAccounts((prev) => [...prev, target]);
+      showToast("削除に失敗しました。もう一度お試しください", { variant: "error" });
+    }
   }
 
   const expenseCategories = categories.filter((c) => c.type === "expense");
@@ -173,7 +273,7 @@ export default function SettingsClient({
                   <p className="flex-1 text-[15px] font-medium text-foreground">{m.name}</p>
                   <button
                     type="button"
-                    onClick={() => removeMember(m.id)}
+                    onClick={() => removeMember(m)}
                     className="rounded-full px-2.5 py-1.5 text-[12px] text-rose-500 active:bg-rose-500/10"
                   >
                     削除
@@ -188,13 +288,19 @@ export default function SettingsClient({
             className="rounded-2xl bg-surface p-4 shadow-[0_2px_20px_-6px_rgba(120,90,40,0.14)] ring-1 ring-line-soft"
           >
             <h3 className="mb-3 text-[15px] font-semibold text-foreground">メンバーを追加</h3>
-            <input
-              type="text"
-              value={memberName}
-              onChange={(e) => setMemberName(e.target.value)}
-              placeholder="名前"
-              className="mb-3 w-full rounded-xl border border-line bg-surface px-3.5 py-2.5 text-[16px] text-foreground focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
-            />
+            <div className="mb-3">
+              <input
+                type="text"
+                value={memberName}
+                onChange={(e) => {
+                  setMemberName(e.target.value);
+                  if (memberNameError) setMemberNameError(null);
+                }}
+                placeholder="名前"
+                className={fieldClass(!!memberNameError)}
+              />
+              {memberNameError && <FieldError>{memberNameError}</FieldError>}
+            </div>
             <div className="mb-3 flex flex-wrap gap-2">
               {COLOR_OPTIONS.map((color) => (
                 <button
@@ -233,7 +339,7 @@ export default function SettingsClient({
                   <p className="flex-1 text-[15px] font-medium text-foreground">{c.name}</p>
                   <button
                     type="button"
-                    onClick={() => removeCategory(c.id)}
+                    onClick={() => removeCategory(c)}
                     className="rounded-full px-2.5 py-1.5 text-[12px] text-rose-500 active:bg-rose-500/10"
                   >
                     削除
@@ -255,7 +361,7 @@ export default function SettingsClient({
                   <p className="flex-1 text-[15px] font-medium text-foreground">{c.name}</p>
                   <button
                     type="button"
-                    onClick={() => removeCategory(c.id)}
+                    onClick={() => removeCategory(c)}
                     className="rounded-full px-2.5 py-1.5 text-[12px] text-rose-500 active:bg-rose-500/10"
                   >
                     削除
@@ -270,13 +376,19 @@ export default function SettingsClient({
             className="rounded-2xl bg-surface p-4 shadow-[0_2px_20px_-6px_rgba(120,90,40,0.14)] ring-1 ring-line-soft"
           >
             <h3 className="mb-3 text-[15px] font-semibold text-foreground">カテゴリを追加</h3>
-            <input
-              type="text"
-              value={categoryName}
-              onChange={(e) => setCategoryName(e.target.value)}
-              placeholder="カテゴリ名"
-              className="mb-3 w-full rounded-xl border border-line bg-surface px-3.5 py-2.5 text-[16px] text-foreground focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
-            />
+            <div className="mb-3">
+              <input
+                type="text"
+                value={categoryName}
+                onChange={(e) => {
+                  setCategoryName(e.target.value);
+                  if (categoryNameError) setCategoryNameError(null);
+                }}
+                placeholder="カテゴリ名"
+                className={fieldClass(!!categoryNameError)}
+              />
+              {categoryNameError && <FieldError>{categoryNameError}</FieldError>}
+            </div>
             <div className="mb-3 flex gap-1 rounded-xl bg-track p-1">
               <button
                 type="button"
@@ -352,7 +464,7 @@ export default function SettingsClient({
                   </div>
                   <button
                     type="button"
-                    onClick={() => removeAssetAccount(a.id)}
+                    onClick={() => removeAssetAccount(a)}
                     className="rounded-full px-2.5 py-1.5 text-[12px] text-rose-500 active:bg-rose-500/10"
                   >
                     削除
@@ -367,13 +479,19 @@ export default function SettingsClient({
             className="rounded-2xl bg-surface p-4 shadow-[0_2px_20px_-6px_rgba(120,90,40,0.14)] ring-1 ring-line-soft"
           >
             <h3 className="mb-3 text-[15px] font-semibold text-foreground">資産口座を追加</h3>
-            <input
-              type="text"
-              value={accountName}
-              onChange={(e) => setAccountName(e.target.value)}
-              placeholder="口座名（例: 普通預金（三井住友））"
-              className="mb-3 w-full rounded-xl border border-line bg-surface px-3.5 py-2.5 text-[16px] text-foreground focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
-            />
+            <div className="mb-3">
+              <input
+                type="text"
+                value={accountName}
+                onChange={(e) => {
+                  setAccountName(e.target.value);
+                  if (accountNameError) setAccountNameError(null);
+                }}
+                placeholder="口座名（例: 普通預金（三井住友））"
+                className={fieldClass(!!accountNameError)}
+              />
+              {accountNameError && <FieldError>{accountNameError}</FieldError>}
+            </div>
             <div className="mb-3 flex gap-1 rounded-xl bg-track p-1">
               {ASSET_TYPES.map((t) => (
                 <button
