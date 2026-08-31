@@ -133,11 +133,19 @@ export type SearchResults = {
     value: number;
     note?: string;
   }[];
+  /** 各カテゴリの一致件数（表示件数を8件に絞る前の総数）。「他◯件」の表示に使う。 */
+  totalCounts: {
+    transactions: number;
+    events: number;
+    snapshots: number;
+  };
 };
 
 export async function searchAll(query: string): Promise<SearchResults> {
   const q = query.trim().toLowerCase();
-  if (!q) return { transactions: [], events: [], snapshots: [] };
+  if (!q) {
+    return { transactions: [], events: [], snapshots: [], totalCounts: { transactions: 0, events: 0, snapshots: 0 } };
+  }
 
   const [transactions, events, snapshots, categories, members, accounts] = await Promise.all([
     gas.getTransactions(),
@@ -152,52 +160,61 @@ export async function searchAll(query: string): Promise<SearchResults> {
   const memberName = (id?: string) => members.find((m) => m.id === id)?.name;
   const accountName = (id: string) => accounts.find((a) => a.id === id)?.name ?? "不明な口座";
 
-  const matchedTransactions = transactions
+  const allMatchedTransactions = transactions
     .filter(
       (t) =>
         (t.memo ?? "").toLowerCase().includes(q) ||
         categoryName(t.categoryId).toLowerCase().includes(q)
     )
-    .sort((a, b) => b.date.localeCompare(a.date))
-    .slice(0, 8)
-    .map((t) => ({
-      id: t.id,
-      date: t.date,
-      amount: t.amount,
-      type: t.type,
-      categoryName: categoryName(t.categoryId),
-      memo: t.memo,
-    }));
+    .sort((a, b) => b.date.localeCompare(a.date));
 
-  const matchedEvents = events
+  const allMatchedEvents = events
     .filter(
       (e) => e.title.toLowerCase().includes(q) || (e.memo ?? "").toLowerCase().includes(q)
     )
-    .sort((a, b) => b.startDate.localeCompare(a.startDate))
-    .slice(0, 8)
-    .map((e) => ({
-      id: e.id,
-      title: e.title,
-      startDate: e.startDate,
-      memberName: memberName(e.memberId),
-    }));
+    .sort((a, b) => b.startDate.localeCompare(a.startDate));
 
-  const matchedSnapshots = snapshots
+  const allMatchedSnapshots = snapshots
     .filter(
       (s) =>
         (s.note ?? "").toLowerCase().includes(q) ||
         accountName(s.assetAccountId).toLowerCase().includes(q)
     )
-    .sort((a, b) => b.date.localeCompare(a.date))
-    .slice(0, 8)
-    .map((s) => ({
-      id: s.id,
-      accountId: s.assetAccountId,
-      accountName: accountName(s.assetAccountId),
-      date: s.date,
-      value: s.value,
-      note: s.note,
-    }));
+    .sort((a, b) => b.date.localeCompare(a.date));
 
-  return { transactions: matchedTransactions, events: matchedEvents, snapshots: matchedSnapshots };
+  const matchedTransactions = allMatchedTransactions.slice(0, 8).map((t) => ({
+    id: t.id,
+    date: t.date,
+    amount: t.amount,
+    type: t.type,
+    categoryName: categoryName(t.categoryId),
+    memo: t.memo,
+  }));
+
+  const matchedEvents = allMatchedEvents.slice(0, 8).map((e) => ({
+    id: e.id,
+    title: e.title,
+    startDate: e.startDate,
+    memberName: memberName(e.memberId),
+  }));
+
+  const matchedSnapshots = allMatchedSnapshots.slice(0, 8).map((s) => ({
+    id: s.id,
+    accountId: s.assetAccountId,
+    accountName: accountName(s.assetAccountId),
+    date: s.date,
+    value: s.value,
+    note: s.note,
+  }));
+
+  return {
+    transactions: matchedTransactions,
+    events: matchedEvents,
+    snapshots: matchedSnapshots,
+    totalCounts: {
+      transactions: allMatchedTransactions.length,
+      events: allMatchedEvents.length,
+      snapshots: allMatchedSnapshots.length,
+    },
+  };
 }

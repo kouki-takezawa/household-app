@@ -1,26 +1,41 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { searchAll, type SearchResults } from "@/lib/actions";
 import { formatYen } from "@/lib/types";
+
+// バックエンドが Google Apps Script 経由（応答に数秒かかることがある。gas.ts 参照）のため、
+// 1文字入力するたびにリクエストを飛ばすと連続リクエストで詰まってしまう。
+// 入力が落ち着いてから検索する（デバウンス）ことでリクエスト数を抑える。
+const SEARCH_DEBOUNCE_MS = 350;
 
 export function GlobalSearch() {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResults | null>(null);
   const [pending, startTransition] = useTransition();
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   function handleChange(value: string) {
     setQuery(value);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
     if (!value.trim()) {
       setResults(null);
       return;
     }
-    startTransition(async () => {
-      const r = await searchAll(value);
-      setResults(r);
-    });
+    debounceRef.current = setTimeout(() => {
+      startTransition(async () => {
+        const r = await searchAll(value);
+        setResults(r);
+      });
+    }, SEARCH_DEBOUNCE_MS);
   }
+
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, []);
 
   const hasQuery = query.trim().length > 0;
   const totalCount = results
@@ -58,8 +73,13 @@ export function GlobalSearch() {
 
           {!!results?.transactions.length && (
             <div>
-              <h3 className="mb-1.5 px-1 text-[12px] font-semibold uppercase tracking-wide text-muted">
-                家計簿
+              <h3 className="mb-1.5 flex items-baseline justify-between px-1 text-[12px] font-semibold uppercase tracking-wide text-muted">
+                <span>家計簿</span>
+                {results.totalCounts.transactions > results.transactions.length && (
+                  <Link href="/budget" className="normal-case text-brand">
+                    他{results.totalCounts.transactions - results.transactions.length}件 →
+                  </Link>
+                )}
               </h3>
               <div className="divide-y divide-line-soft rounded-2xl bg-surface shadow-card ring-1 ring-line-soft">
                 {results.transactions.map((t) => (
@@ -91,8 +111,13 @@ export function GlobalSearch() {
 
           {!!results?.events.length && (
             <div>
-              <h3 className="mb-1.5 px-1 text-[12px] font-semibold uppercase tracking-wide text-muted">
-                予定
+              <h3 className="mb-1.5 flex items-baseline justify-between px-1 text-[12px] font-semibold uppercase tracking-wide text-muted">
+                <span>予定</span>
+                {results.totalCounts.events > results.events.length && (
+                  <Link href="/schedule" className="normal-case text-brand">
+                    他{results.totalCounts.events - results.events.length}件 →
+                  </Link>
+                )}
               </h3>
               <div className="divide-y divide-line-soft rounded-2xl bg-surface shadow-card ring-1 ring-line-soft">
                 {results.events.map((e) => (
@@ -119,8 +144,13 @@ export function GlobalSearch() {
 
           {!!results?.snapshots.length && (
             <div>
-              <h3 className="mb-1.5 px-1 text-[12px] font-semibold uppercase tracking-wide text-muted">
-                資産記録
+              <h3 className="mb-1.5 flex items-baseline justify-between px-1 text-[12px] font-semibold uppercase tracking-wide text-muted">
+                <span>資産記録</span>
+                {results.totalCounts.snapshots > results.snapshots.length && (
+                  <Link href="/assets" className="normal-case text-brand">
+                    他{results.totalCounts.snapshots - results.snapshots.length}件 →
+                  </Link>
+                )}
               </h3>
               <div className="divide-y divide-line-soft rounded-2xl bg-surface shadow-card ring-1 ring-line-soft">
                 {results.snapshots.map((s) => (

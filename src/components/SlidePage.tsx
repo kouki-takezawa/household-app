@@ -5,9 +5,16 @@ import { useRouter } from "next/navigation";
 
 export function SlidePage({
   title,
+  backHref,
   children,
 }: {
   title: string;
+  /**
+   * 一覧画面に戻る先のURL。詳細ページへ直接リンク・リロードで来た場合は
+   * ブラウザの履歴が空で router.back() が反応しないことがあるため、
+   * 履歴があれば back()、無ければこの backHref へ push するフォールバックを持つ。
+   */
+  backHref: string;
   children: React.ReactNode;
 }) {
   const router = useRouter();
@@ -17,6 +24,18 @@ export function SlidePage({
     const id = requestAnimationFrame(() => setEntered(true));
     return () => cancelAnimationFrame(id);
   }, []);
+
+  function goBack() {
+    // このページ自体がエントリーポイント（直接アクセス・リロード）だと history.length は
+    // ごく短い。アプリ内遷移で来た場合のみ back() を使い、そうでなければ backHref へ push
+    // するフォールバックを持つ（クリック時に判定すれば十分で、state化する必要はない）。
+    const hasHistory = window.history.length > 1 && document.referrer.startsWith(window.location.origin);
+    if (hasHistory) {
+      router.back();
+    } else {
+      router.push(backHref);
+    }
+  }
 
   return (
     <div
@@ -29,7 +48,7 @@ export function SlidePage({
       <header className="mx-auto flex w-full max-w-3xl flex-shrink-0 items-center gap-1 px-2 pb-2 pt-3">
         <button
           type="button"
-          onClick={() => router.back()}
+          onClick={goBack}
           aria-label="戻る"
           className="flex h-9 w-9 items-center justify-center rounded-full text-brand active:bg-track"
         >

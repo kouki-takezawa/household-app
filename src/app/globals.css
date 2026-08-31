@@ -67,6 +67,18 @@ textarea {
   font-size: 16px;
 }
 
+/* 金額入力は AmountField 側でカンマ区切り表示するため、ブラウザ標準の
+   上下スピンボタンは不要（誤タップの原因にもなる）。type="number" が
+   残っている箇所（日付以外の数値系）向けに一律で非表示にしておく。 */
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
 * {
   -webkit-font-smoothing: antialiased;
 }
@@ -88,6 +100,25 @@ textarea {
   }
   .shadow-nav {
     box-shadow: var(--shadow-nav);
+  }
+
+  /* 画面ごとに px-4/px-5・py-2/py-2.5/py-3 とバラつきがちだった「追加」系の
+     主要ボタンのスペーシングを1箇所に集約する。 */
+  .btn-add {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    border-radius: 9999px;
+    background: var(--brand);
+    padding: 0.5rem 1rem;
+    font-size: 14px;
+    font-weight: 600;
+    color: white;
+    box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 8px 16px -6px color-mix(in srgb, var(--brand) 35%, transparent);
+    transition: transform 0.15s ease;
+  }
+  .btn-add:active {
+    transform: scale(0.96);
   }
 }
 

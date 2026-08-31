@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useSearchParams } from "next/navigation";
 import clsx from "clsx";
 import {
   type Member,
@@ -21,7 +22,13 @@ import { EmptyState } from "@/components/EmptyState";
 import { useToast } from "@/components/Toast";
 import { useConfirm } from "@/components/ConfirmDialog";
 import { fieldClass, FieldError } from "@/components/form";
+import { IconButton, TrashIcon } from "@/components/icons";
 import { generateId } from "@/lib/id";
+
+type Tab = "members" | "categories" | "assets";
+function isTab(value: string | null): value is Tab {
+  return value === "members" || value === "categories" || value === "assets";
+}
 
 const COLOR_OPTIONS = [
   "#10b981",
@@ -47,7 +54,14 @@ export default function SettingsClient({
 }) {
   const showToast = useToast();
   const confirmDialog = useConfirm();
-  const [tab, setTab] = useState<"members" | "categories" | "assets">("members");
+  const searchParams = useSearchParams();
+  // 資産管理画面の「＋ 口座を追加」から /settings?tab=assets で直接この画面の
+  // 該当タブへ遷移できるようにする（以前は口座追加の導線が設定画面の中に
+  // 埋もれていて見つけにくかった）。
+  const [tab, setTab] = useState<Tab>(() => {
+    const param = searchParams.get("tab");
+    return isTab(param) ? param : "members";
+  });
   const [members, setMembers] = useState<Member[]>(initialMembers);
   const [categories, setCategories] = useState<Category[]>(initialCategories);
   const [assetAccounts, setAssetAccounts] = useState<AssetAccount[]>(initialAssetAccounts);
@@ -269,13 +283,9 @@ export default function SettingsClient({
                 <div key={m.id} className="flex items-center gap-3 p-3.5">
                   <ColorAvatar label={m.name} color={m.color} size="sm" />
                   <p className="flex-1 text-[15px] font-medium text-foreground">{m.name}</p>
-                  <button
-                    type="button"
-                    onClick={() => removeMember(m)}
-                    className="rounded-full px-2.5 py-1.5 text-[12px] text-rose-500 active:bg-rose-500/10"
-                  >
-                    削除
-                  </button>
+                  <IconButton label="削除" variant="danger" onClick={() => removeMember(m)}>
+                    <TrashIcon />
+                  </IconButton>
                 </div>
               ))}
             </div>
@@ -332,13 +342,9 @@ export default function SettingsClient({
                 <div key={c.id} className="flex items-center gap-3 p-3.5">
                   <ColorAvatar label={c.name} color={c.color} size="sm" />
                   <p className="flex-1 text-[15px] font-medium text-foreground">{c.name}</p>
-                  <button
-                    type="button"
-                    onClick={() => removeCategory(c)}
-                    className="rounded-full px-2.5 py-1.5 text-[12px] text-rose-500 active:bg-rose-500/10"
-                  >
-                    削除
-                  </button>
+                  <IconButton label="削除" variant="danger" onClick={() => removeCategory(c)}>
+                    <TrashIcon />
+                  </IconButton>
                 </div>
               ))}
             </div>
@@ -351,13 +357,9 @@ export default function SettingsClient({
                 <div key={c.id} className="flex items-center gap-3 p-3.5">
                   <ColorAvatar label={c.name} color={c.color} size="sm" />
                   <p className="flex-1 text-[15px] font-medium text-foreground">{c.name}</p>
-                  <button
-                    type="button"
-                    onClick={() => removeCategory(c)}
-                    className="rounded-full px-2.5 py-1.5 text-[12px] text-rose-500 active:bg-rose-500/10"
-                  >
-                    削除
-                  </button>
+                  <IconButton label="削除" variant="danger" onClick={() => removeCategory(c)}>
+                    <TrashIcon />
+                  </IconButton>
                 </div>
               ))}
             </div>
@@ -454,13 +456,9 @@ export default function SettingsClient({
                     <p className="truncate text-[15px] font-medium text-foreground">{a.name}</p>
                     <p className="text-[12px] text-muted">{ASSET_TYPE_LABEL[a.type]}</p>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => removeAssetAccount(a)}
-                    className="rounded-full px-2.5 py-1.5 text-[12px] text-rose-500 active:bg-rose-500/10"
-                  >
-                    削除
-                  </button>
+                  <IconButton label="削除" variant="danger" onClick={() => removeAssetAccount(a)}>
+                    <TrashIcon />
+                  </IconButton>
                 </div>
               ))}
             </div>

@@ -18,6 +18,15 @@ export function upcomingEvents(events: ScheduleEvent[], today: string, limit = 4
     .slice(0, limit);
 }
 
+/**
+ * 直近の家計簿記録。ホーム画面には資産・予定の直近状況はあっても収支の直近記録が
+ * なく、収支を見るには必ず /budget への遷移が必要だったため、ダッシュボードにも
+ * 少数だけ表示できるようにする。
+ */
+export function recentTransactions(transactions: Transaction[], limit = 3) {
+  return [...transactions].sort((a, b) => b.date.localeCompare(a.date)).slice(0, limit);
+}
+
 export function totalAssetsAsOf(
   accounts: AssetAccount[],
   snapshots: AssetSnapshot[],

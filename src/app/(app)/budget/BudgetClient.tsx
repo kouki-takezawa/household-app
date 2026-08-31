@@ -14,7 +14,6 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import clsx from "clsx";
 import {
   type Category,
   type Member,
@@ -27,9 +26,14 @@ import {
 import { addTransaction, editTransaction, removeTransaction } from "@/lib/actions";
 import { ColorAvatar } from "@/components/ColorAvatar";
 import { EmptyState } from "@/components/EmptyState";
+import { BottomSheet, SheetActions } from "@/components/BottomSheet";
+import { AmountField } from "@/components/AmountField";
+import { MemberFilterChips } from "@/components/MemberFilterChips";
+import { IconButton, PencilIcon, TrashIcon } from "@/components/icons";
 import { useToast } from "@/components/Toast";
 import { useConfirm } from "@/components/ConfirmDialog";
 import { fieldClass, FieldError } from "@/components/form";
+import { chartTooltipStyle, chartLegendStyle } from "@/lib/chartTheme";
 import { generateId } from "@/lib/id";
 
 function monthOptions(txs: Transaction[], defaultMonth: string): string[] {
@@ -326,34 +330,13 @@ export default function BudgetClient({
               ))}
             </select>
           )}
-          <button
-            type="button"
-            onClick={openNewForm}
-            className="rounded-full bg-brand px-4 py-2 text-[14px] font-semibold text-white shadow-sm shadow-brand/30 transition-transform active:scale-95"
-          >
+          <button type="button" onClick={openNewForm} className="btn-add">
             ＋ 記録
           </button>
         </div>
       </section>
 
-      {members.length > 0 && (
-        <section className="flex flex-wrap gap-2">
-          {members.map((m) => (
-            <button
-              key={m.id}
-              type="button"
-              onClick={() => toggleMember(m.id)}
-              className={clsx(
-                "flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[12px] font-medium transition-opacity",
-                memberFilter.has(m.id) ? "border-line bg-surface" : "border-line-soft opacity-40"
-              )}
-            >
-              <span className="h-2 w-2 rounded-full" style={{ backgroundColor: m.color }} />
-              {m.name}
-            </button>
-          ))}
-        </section>
-      )}
+      <MemberFilterChips members={members} selected={memberFilter} onToggle={toggleMember} />
 
       <section className="grid grid-cols-3 gap-2.5">
         <div className="rounded-2xl bg-surface p-3.5 shadow-card ring-1 ring-line-soft">
@@ -378,27 +361,19 @@ export default function BudgetClient({
           <div className="h-56">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
-                <Pie
-                  data={categoryBreakdown}
-                  dataKey="value"
-                  nameKey="name"
-                  cx="50%"
-                  cy="50%"
-                  outerRadius={80}
-                  label={(d: { name?: string }) => d.name ?? ""}
-                >
+                <Pie data={categoryBreakdown} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80}>
                   {categoryBreakdown.map((entry) => (
                     <Cell key={entry.name} fill={entry.color} />
                   ))}
                 </Pie>
-                <Tooltip formatter={(v) => formatYen(Number(v ?? 0))} />
+                <Tooltip formatter={(v) => formatYen(Number(v ?? 0))} {...chartTooltipStyle()} />
               </PieChart>
             </ResponsiveContainer>
           </div>
           <div className="mt-3 flex flex-col gap-2.5">
             {categoryBreakdown.map((c) => (
               <div key={c.name} className="flex items-center gap-3">
-                <p className="w-20 flex-shrink-0 truncate text-[12px] text-foreground">
+                <p className="w-24 flex-shrink-0 truncate text-[12px] text-foreground sm:w-28" title={c.name}>
                   {c.name}
                 </p>
                 <div className="h-2 flex-1 overflow-hidden rounded-full bg-track">
@@ -426,8 +401,8 @@ export default function BudgetClient({
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--line)" />
               <XAxis dataKey="label" fontSize={12} stroke="var(--muted)" />
               <YAxis fontSize={12} stroke="var(--muted)" tickFormatter={(v) => `${v / 10000}万`} />
-              <Tooltip formatter={(v) => formatYen(Number(v ?? 0))} />
-              <Legend />
+              <Tooltip formatter={(v) => formatYen(Number(v ?? 0))} {...chartTooltipStyle()} />
+              <Legend wrapperStyle={chartLegendStyle()} />
               <Bar dataKey="収入" fill="#10b981" radius={[4, 4, 0, 0]} />
               <Bar dataKey="支出" fill="#f43f5e" radius={[4, 4, 0, 0]} />
             </BarChart>
@@ -480,6 +455,8 @@ export default function BudgetClient({
                 </svg>
               }
               message={isSearching ? "該当する記録が見つかりません" : "この期間の記録はありません"}
+              actionLabel={isSearching ? undefined : "記録を追加"}
+              onAction={isSearching ? undefined : openNewForm}
             />
           )}
           {visibleTx.map((t) => {
@@ -506,20 +483,12 @@ export default function BudgetClient({
                   {t.type === "income" ? "+" : "-"}
                   {formatYen(t.amount)}
                 </p>
-                <button
-                  type="button"
-                  onClick={() => openEditForm(t)}
-                  className="rounded-full px-2.5 py-1.5 text-[12px] text-subtle active:opacity-70"
-                >
-                  編集
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleDelete(t)}
-                  className="rounded-full px-2.5 py-1.5 text-[12px] text-rose-500 active:bg-rose-500/10"
-                >
-                  削除
-                </button>
+                <IconButton label="編集" onClick={() => openEditForm(t)}>
+                  <PencilIcon />
+                </IconButton>
+                <IconButton label="削除" variant="danger" onClick={() => handleDelete(t)}>
+                  <TrashIcon />
+                </IconButton>
               </div>
             );
           })}
@@ -527,140 +496,113 @@ export default function BudgetClient({
       </section>
 
       {showForm && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 sm:items-center">
-          <form
-            onSubmit={handleSubmit}
-            className="w-full max-w-sm rounded-t-3xl bg-surface px-5 pt-3 shadow-xl sm:rounded-3xl sm:pt-5"
-            style={{ paddingBottom: "calc(1.5rem + env(safe-area-inset-bottom))" }}
-          >
-            <div className="mx-auto mb-3 h-1.5 w-10 rounded-full bg-line sm:hidden" />
-            <h3 className="mb-4 text-[17px] font-bold text-foreground">
-              {editingId ? "収支を編集" : "収支を記録"}
-            </h3>
-            <div className="flex flex-col gap-3">
-              <div className="flex gap-1 rounded-xl bg-track p-1">
-                <button
-                  type="button"
-                  onClick={() =>
-                    setForm((f) => ({
-                      ...f,
-                      type: "expense",
-                      categoryId: categories.find((c) => c.type === "expense")?.id ?? "",
-                    }))
-                  }
-                  className={`flex-1 rounded-lg py-2 text-[14px] font-semibold transition-colors ${
-                    form.type === "expense"
-                      ? "bg-surface text-rose-500 shadow-sm"
-                      : "text-subtle"
-                  }`}
-                >
-                  支出
-                </button>
-                <button
-                  type="button"
-                  onClick={() =>
-                    setForm((f) => ({
-                      ...f,
-                      type: "income",
-                      categoryId: categories.find((c) => c.type === "income")?.id ?? "",
-                    }))
-                  }
-                  className={`flex-1 rounded-lg py-2 text-[14px] font-semibold transition-colors ${
-                    form.type === "income"
-                      ? "bg-surface text-emerald-600 shadow-sm"
-                      : "text-subtle"
-                  }`}
-                >
-                  収入
-                </button>
-              </div>
-
-              <label className="text-[12px] text-muted">
-                日付
-                <input
-                  type="date"
-                  required
-                  value={form.date}
-                  onChange={(e) => setForm((f) => ({ ...f, date: e.target.value }))}
-                  className={fieldClass()}
-                />
-              </label>
-
-              <label className="text-[12px] text-muted">
-                金額
-                <input
-                  type="number"
-                  value={form.amount}
-                  onChange={(e) => {
-                    setForm((f) => ({ ...f, amount: e.target.value }));
-                    if (amountError) setAmountError(null);
-                  }}
-                  className={fieldClass(!!amountError)}
-                  placeholder="0"
-                />
-                {amountError && <FieldError>{amountError}</FieldError>}
-              </label>
-
-              <label className="text-[12px] text-muted">
-                カテゴリ
-                <select
-                  value={form.categoryId}
-                  onChange={(e) => setForm((f) => ({ ...f, categoryId: e.target.value }))}
-                  className={fieldClass()}
-                >
-                  {availableCategories.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
-
-              <label className="text-[12px] text-muted">
-                記録者
-                <select
-                  value={form.memberId}
-                  onChange={(e) => setForm((f) => ({ ...f, memberId: e.target.value }))}
-                  className={fieldClass()}
-                >
-                  {members.map((m) => (
-                    <option key={m.id} value={m.id}>
-                      {m.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
-
-              <label className="text-[12px] text-muted">
-                メモ
-                <input
-                  type="text"
-                  value={form.memo}
-                  onChange={(e) => setForm((f) => ({ ...f, memo: e.target.value }))}
-                  className={fieldClass()}
-                  placeholder="任意"
-                />
-              </label>
-            </div>
-
-            <div className="mt-5 flex gap-2">
+        <BottomSheet title={editingId ? "収支を編集" : "収支を記録"} onClose={() => setShowForm(false)}>
+          <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+            <div className="flex gap-1 rounded-xl bg-track p-1">
               <button
                 type="button"
-                onClick={() => setShowForm(false)}
-                className="flex-1 rounded-full border border-line py-3 text-[15px] font-semibold text-subtle active:opacity-70"
+                onClick={() =>
+                  setForm((f) => ({
+                    ...f,
+                    type: "expense",
+                    categoryId: categories.find((c) => c.type === "expense")?.id ?? "",
+                  }))
+                }
+                className={`flex-1 rounded-lg py-2 text-[14px] font-semibold transition-colors ${
+                  form.type === "expense"
+                    ? "bg-surface text-rose-500 shadow-sm"
+                    : "text-subtle"
+                }`}
               >
-                キャンセル
+                支出
               </button>
               <button
-                type="submit"
-                disabled={saving}
-                className="flex-1 rounded-full bg-brand py-3 text-[15px] font-semibold text-white shadow-sm shadow-brand/30 transition-transform active:scale-[0.98] disabled:opacity-60"
+                type="button"
+                onClick={() =>
+                  setForm((f) => ({
+                    ...f,
+                    type: "income",
+                    categoryId: categories.find((c) => c.type === "income")?.id ?? "",
+                  }))
+                }
+                className={`flex-1 rounded-lg py-2 text-[14px] font-semibold transition-colors ${
+                  form.type === "income"
+                    ? "bg-surface text-emerald-600 shadow-sm"
+                    : "text-subtle"
+                }`}
               >
-                {saving ? "保存中…" : "保存"}
+                収入
               </button>
             </div>
+
+            <label className="text-[12px] text-muted">
+              日付
+              <input
+                type="date"
+                required
+                value={form.date}
+                onChange={(e) => setForm((f) => ({ ...f, date: e.target.value }))}
+                className={fieldClass()}
+              />
+            </label>
+
+            <label className="text-[12px] text-muted">
+              金額
+              <AmountField
+                value={form.amount}
+                onChange={(raw) => {
+                  setForm((f) => ({ ...f, amount: raw }));
+                  if (amountError) setAmountError(null);
+                }}
+                hasError={!!amountError}
+              />
+              {amountError && <FieldError>{amountError}</FieldError>}
+            </label>
+
+            <label className="text-[12px] text-muted">
+              カテゴリ
+              <select
+                value={form.categoryId}
+                onChange={(e) => setForm((f) => ({ ...f, categoryId: e.target.value }))}
+                className={fieldClass()}
+              >
+                {availableCategories.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className="text-[12px] text-muted">
+              記録者
+              <select
+                value={form.memberId}
+                onChange={(e) => setForm((f) => ({ ...f, memberId: e.target.value }))}
+                className={fieldClass()}
+              >
+                {members.map((m) => (
+                  <option key={m.id} value={m.id}>
+                    {m.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className="text-[12px] text-muted">
+              メモ
+              <input
+                type="text"
+                value={form.memo}
+                onChange={(e) => setForm((f) => ({ ...f, memo: e.target.value }))}
+                className={fieldClass()}
+                placeholder="任意"
+              />
+            </label>
+
+            <SheetActions onCancel={() => setShowForm(false)} submitLabel="保存" saving={saving} />
           </form>
-        </div>
+        </BottomSheet>
       )}
     </div>
   );

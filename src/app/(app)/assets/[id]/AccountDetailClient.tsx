@@ -22,9 +22,13 @@ import {
 import { addAssetSnapshot, editAssetSnapshot, removeAssetSnapshot } from "@/lib/actions";
 import { SlidePage } from "@/components/SlidePage";
 import { EmptyState } from "@/components/EmptyState";
+import { BottomSheet, SheetActions } from "@/components/BottomSheet";
+import { AmountField } from "@/components/AmountField";
+import { IconButton, PencilIcon, TrashIcon } from "@/components/icons";
 import { useToast } from "@/components/Toast";
 import { useConfirm } from "@/components/ConfirmDialog";
-import { fieldClass, FieldError } from "@/components/form";
+import { FieldError } from "@/components/form";
+import { chartTooltipStyle } from "@/lib/chartTheme";
 import { generateId } from "@/lib/id";
 
 function emptyForm(today: string) {
@@ -157,7 +161,7 @@ export default function AccountDetailClient({
   }
 
   return (
-    <SlidePage title={account.name}>
+    <SlidePage title={account.name} backHref="/assets">
       <div className="flex flex-col gap-5 pt-2">
         <div className="rounded-2xl bg-surface p-5 shadow-card ring-1 ring-line-soft">
           <p className="text-[13px] text-muted">
@@ -194,7 +198,7 @@ export default function AccountDetailClient({
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--line)" />
                   <XAxis dataKey="date" fontSize={12} stroke="var(--muted)" />
                   <YAxis fontSize={12} stroke="var(--muted)" tickFormatter={(v) => `${v / 10000}万`} />
-                  <Tooltip formatter={(v) => formatYen(Number(v ?? 0))} />
+                  <Tooltip formatter={(v) => formatYen(Number(v ?? 0))} {...chartTooltipStyle()} />
                   <Area
                     type="monotone"
                     dataKey="評価額"
@@ -222,6 +226,8 @@ export default function AccountDetailClient({
                   </svg>
                 }
                 message="記録はまだありません"
+                actionLabel="残高を記録"
+                onAction={openNewForm}
               />
             )}
             {history.map((s) => (
@@ -235,20 +241,12 @@ export default function AccountDetailClient({
                     {s.note ? ` ・ ${s.note}` : ""}
                   </p>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => openEditForm(s)}
-                  className="rounded-full px-2.5 py-1.5 text-[12px] text-subtle active:opacity-70"
-                >
-                  編集
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleDelete(s)}
-                  className="rounded-full px-2.5 py-1.5 text-[12px] text-rose-500 active:bg-rose-500/10"
-                >
-                  削除
-                </button>
+                <IconButton label="編集" onClick={() => openEditForm(s)}>
+                  <PencilIcon />
+                </IconButton>
+                <IconButton label="削除" variant="danger" onClick={() => handleDelete(s)}>
+                  <TrashIcon />
+                </IconButton>
               </div>
             ))}
           </div>
@@ -256,70 +254,46 @@ export default function AccountDetailClient({
       </div>
 
       {showForm && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 sm:items-center">
-          <form
-            onSubmit={handleSubmit}
-            className="w-full max-w-sm rounded-t-3xl bg-surface px-5 pt-3 shadow-xl sm:rounded-3xl sm:pt-5"
-            style={{ paddingBottom: "calc(1.5rem + env(safe-area-inset-bottom))" }}
-          >
-            <div className="mx-auto mb-3 h-1.5 w-10 rounded-full bg-line sm:hidden" />
-            <h3 className="mb-4 text-[17px] font-bold text-foreground">
-              {editingId ? "記録を編集" : "残高・評価額を記録"}
-            </h3>
-            <div className="flex flex-col gap-3">
-              <label className="text-[12px] text-muted">
-                日付
-                <input
-                  type="date"
-                  required
-                  value={form.date}
-                  onChange={(e) => setForm((f) => ({ ...f, date: e.target.value }))}
-                  className="mt-1 w-full rounded-xl border border-line bg-surface px-3.5 py-2.5 text-[16px] text-foreground focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
-                />
-              </label>
-              <label className="text-[12px] text-muted">
-                残高・評価額
-                <input
-                  type="number"
-                  value={form.value}
-                  onChange={(e) => {
-                    setForm((f) => ({ ...f, value: e.target.value }));
-                    if (valueError) setValueError(null);
-                  }}
-                  className={fieldClass(!!valueError)}
-                  placeholder="0"
-                />
-                {valueError && <FieldError>{valueError}</FieldError>}
-              </label>
-              <label className="text-[12px] text-muted">
-                メモ
-                <input
-                  type="text"
-                  value={form.note}
-                  onChange={(e) => setForm((f) => ({ ...f, note: e.target.value }))}
-                  className="mt-1 w-full rounded-xl border border-line bg-surface px-3.5 py-2.5 text-[16px] text-foreground focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
-                  placeholder="任意"
-                />
-              </label>
-            </div>
-            <div className="mt-5 flex gap-2">
-              <button
-                type="button"
-                onClick={() => setShowForm(false)}
-                className="flex-1 rounded-full border border-line py-3 text-[15px] font-semibold text-subtle active:opacity-70"
-              >
-                キャンセル
-              </button>
-              <button
-                type="submit"
-                disabled={saving}
-                className="flex-1 rounded-full bg-brand py-3 text-[15px] font-semibold text-white shadow-sm shadow-brand/30 transition-transform active:scale-[0.98] disabled:opacity-60"
-              >
-                {saving ? "保存中…" : "保存"}
-              </button>
-            </div>
+        <BottomSheet
+          title={editingId ? "記録を編集" : "残高・評価額を記録"}
+          onClose={() => setShowForm(false)}
+        >
+          <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+            <label className="text-[12px] text-muted">
+              日付
+              <input
+                type="date"
+                required
+                value={form.date}
+                onChange={(e) => setForm((f) => ({ ...f, date: e.target.value }))}
+                className="mt-1 w-full rounded-xl border border-line bg-surface px-3.5 py-2.5 text-[16px] text-foreground focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
+              />
+            </label>
+            <label className="text-[12px] text-muted">
+              残高・評価額
+              <AmountField
+                value={form.value}
+                onChange={(raw) => {
+                  setForm((f) => ({ ...f, value: raw }));
+                  if (valueError) setValueError(null);
+                }}
+                hasError={!!valueError}
+              />
+              {valueError && <FieldError>{valueError}</FieldError>}
+            </label>
+            <label className="text-[12px] text-muted">
+              メモ
+              <input
+                type="text"
+                value={form.note}
+                onChange={(e) => setForm((f) => ({ ...f, note: e.target.value }))}
+                className="mt-1 w-full rounded-xl border border-line bg-surface px-3.5 py-2.5 text-[16px] text-foreground focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
+                placeholder="任意"
+              />
+            </label>
+            <SheetActions onCancel={() => setShowForm(false)} submitLabel="保存" saving={saving} />
           </form>
-        </div>
+        </BottomSheet>
       )}
     </SlidePage>
   );

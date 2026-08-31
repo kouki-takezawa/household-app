@@ -68,7 +68,7 @@ export default function EventDetailClient({
         memo: form.memo || undefined,
       });
       showToast("更新しました");
-      router.back();
+      router.push("/schedule");
     } catch {
       showToast("更新に失敗しました。もう一度お試しください", { variant: "error" });
     } finally {
@@ -92,7 +92,7 @@ export default function EventDetailClient({
           }
         },
       });
-      router.back();
+      router.push("/schedule");
     } catch {
       showToast("削除に失敗しました。もう一度お試しください", { variant: "error" });
     }
@@ -100,7 +100,7 @@ export default function EventDetailClient({
 
   if (editing) {
     return (
-      <SlidePage title="予定を編集">
+      <SlidePage title="予定を編集" backHref="/schedule">
         <form onSubmit={handleSubmit} className="flex flex-col gap-3 pt-2">
           <label className="text-[12px] text-muted">
             タイトル
@@ -227,7 +227,7 @@ export default function EventDetailClient({
   }
 
   return (
-    <SlidePage title="予定の詳細">
+    <SlidePage title="予定の詳細" backHref="/schedule">
       <div className="flex flex-col gap-4 pt-2">
         <div className="rounded-2xl bg-surface p-5 shadow-card ring-1 ring-line-soft">
           <div className="flex items-start gap-3">

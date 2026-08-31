@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   monthlySummary,
+  recentTransactions,
   shiftMonthStr,
   totalAssetsAsOf,
   upcomingEvents,
@@ -42,6 +43,28 @@ describe("upcomingEvents", () => {
       memberId: "m1",
     }));
     expect(upcomingEvents(events, "2026-08-01", 2)).toHaveLength(2);
+  });
+});
+
+describe("recentTransactions", () => {
+  it("日付が新しい順にlimit件返す", () => {
+    const transactions: Transaction[] = [
+      { id: "t1", date: "2026-08-01", amount: 100, type: "expense", categoryId: "c1" },
+      { id: "t2", date: "2026-08-15", amount: 200, type: "income", categoryId: "c1" },
+      { id: "t3", date: "2026-08-10", amount: 300, type: "expense", categoryId: "c1" },
+    ];
+    expect(recentTransactions(transactions, 2).map((t) => t.id)).toEqual(["t2", "t3"]);
+  });
+
+  it("既定のlimitは3件", () => {
+    const transactions: Transaction[] = Array.from({ length: 5 }, (_, i) => ({
+      id: `t${i}`,
+      date: `2026-08-${10 + i}`,
+      amount: 100,
+      type: "expense" as const,
+      categoryId: "c1",
+    }));
+    expect(recentTransactions(transactions)).toHaveLength(3);
   });
 });
 

@@ -29,6 +29,8 @@ import { eventOccursOn } from "@/lib/schedule";
 import { addEvent } from "@/lib/actions";
 import { ColorAvatar } from "@/components/ColorAvatar";
 import { EmptyState } from "@/components/EmptyState";
+import { BottomSheet, SheetActions } from "@/components/BottomSheet";
+import { MemberFilterChips } from "@/components/MemberFilterChips";
 import { useToast } from "@/components/Toast";
 import { fieldClass, FieldError } from "@/components/form";
 import { generateId } from "@/lib/id";
@@ -204,27 +206,15 @@ export default function ScheduleClient({
         </div>
       </section>
 
-      <section className="flex flex-wrap gap-2">
-        {members.map((m) => (
-          <button
-            key={m.id}
-            type="button"
-            onClick={() => toggleMember(m.id)}
-            className={clsx(
-              "flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[12px] font-medium transition-opacity",
-              memberFilter.has(m.id) ? "border-line bg-surface" : "border-line-soft opacity-40"
-            )}
-          >
-            <span className="h-2 w-2 rounded-full" style={{ backgroundColor: m.color }} />
-            {m.name}
-          </button>
-        ))}
-      </section>
+      <MemberFilterChips members={members} selected={memberFilter} onToggle={toggleMember} />
 
       <section className="rounded-2xl bg-surface p-3 shadow-card ring-1 ring-line-soft">
-        <div className="grid grid-cols-7 gap-1 text-center text-[11px] text-muted">
-          {WEEKDAYS.map((w) => (
-            <div key={w} className="py-1">
+        <div className="grid grid-cols-7 gap-1 text-center text-[11px]">
+          {WEEKDAYS.map((w, i) => (
+            <div
+              key={w}
+              className={clsx("py-1", i === 0 ? "text-rose-500" : i === 6 ? "text-sky-500" : "text-muted")}
+            >
               {w}
             </div>
           ))}
@@ -233,9 +223,12 @@ export default function ScheduleClient({
           {days.map((day) => {
             const key = format(day, "yyyy-MM-dd");
             const dayEvents = eventsByDay.get(key) ?? [];
+            const visibleDots = dayEvents.slice(0, 3);
+            const overflowCount = dayEvents.length - visibleDots.length;
             const inMonth = viewMode === "week" || isSameMonth(day, cursor);
             const selected = isSameDay(day, selectedDate);
             const isToday = isSameDay(day, TODAY);
+            const dow = day.getDay();
             return (
               <button
                 type="button"
@@ -250,19 +243,28 @@ export default function ScheduleClient({
                 <span
                   className={clsx(
                     "flex h-6 w-6 items-center justify-center rounded-full text-[13px]",
-                    isToday && "bg-brand text-white font-semibold"
+                    isToday
+                      ? "bg-brand text-white font-semibold"
+                      : dow === 0
+                        ? "text-rose-500"
+                        : dow === 6
+                          ? "text-sky-500"
+                          : undefined
                   )}
                 >
                   {format(day, "d")}
                 </span>
-                <div className="mt-1 flex flex-wrap justify-center gap-0.5">
-                  {dayEvents.slice(0, 4).map((ev) => (
+                <div className="mt-1 flex flex-wrap items-center justify-center gap-0.5">
+                  {visibleDots.map((ev) => (
                     <span
                       key={ev.id}
                       className="h-1.5 w-1.5 rounded-full"
                       style={{ backgroundColor: findMemberById(members, ev.memberId)?.color }}
                     />
                   ))}
+                  {overflowCount > 0 && (
+                    <span className="text-[9px] font-semibold leading-none text-muted">+{overflowCount}</span>
+                  )}
                 </div>
               </button>
             );
@@ -275,11 +277,7 @@ export default function ScheduleClient({
           <h2 className="text-[13px] font-semibold uppercase tracking-wide text-muted">
             {format(selectedDate, "M月d日(E)", { locale: ja })}の予定
           </h2>
-          <button
-            type="button"
-            onClick={() => openNewForm(selectedDate)}
-            className="rounded-full bg-brand px-3.5 py-1.5 text-[13px] font-semibold text-white shadow-sm shadow-brand/30 transition-transform active:scale-95"
-          >
+          <button type="button" onClick={() => openNewForm(selectedDate)} className="btn-add">
             ＋ 予定を追加
           </button>
         </div>
@@ -293,6 +291,8 @@ export default function ScheduleClient({
                 </svg>
               }
               message="この日の予定はありません"
+              actionLabel="予定を追加"
+              onAction={() => openNewForm(selectedDate)}
             />
           )}
           {selectedDayEvents.map((event) => {
@@ -323,15 +323,8 @@ export default function ScheduleClient({
       </section>
 
       {showForm && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 sm:items-center">
-          <form
-            onSubmit={handleSubmit}
-            className="w-full max-w-sm rounded-t-3xl bg-surface px-5 pt-3 shadow-xl sm:rounded-3xl sm:pt-5"
-            style={{ paddingBottom: "calc(1.5rem + env(safe-area-inset-bottom))" }}
-          >
-            <div className="mx-auto mb-3 h-1.5 w-10 rounded-full bg-line sm:hidden" />
-            <h3 className="mb-4 text-[17px] font-bold text-foreground">予定を追加</h3>
-            <div className="flex flex-col gap-3">
+        <BottomSheet title="予定を追加" onClose={() => setShowForm(false)}>
+          <form onSubmit={handleSubmit} className="flex flex-col gap-3">
               <label className="text-[12px] text-muted">
                 タイトル
                 <input
@@ -442,26 +435,10 @@ export default function ScheduleClient({
                   placeholder="任意"
                 />
               </label>
-            </div>
 
-            <div className="mt-5 flex gap-2">
-              <button
-                type="button"
-                onClick={() => setShowForm(false)}
-                className="flex-1 rounded-full border border-line py-3 text-[15px] font-semibold text-subtle active:opacity-70"
-              >
-                キャンセル
-              </button>
-              <button
-                type="submit"
-                disabled={saving}
-                className="flex-1 rounded-full bg-brand py-3 text-[15px] font-semibold text-white shadow-sm shadow-brand/30 transition-transform active:scale-[0.98] disabled:opacity-60"
-              >
-                {saving ? "保存中…" : "保存"}
-              </button>
-            </div>
+            <SheetActions onCancel={() => setShowForm(false)} submitLabel="保存" saving={saving} />
           </form>
-        </div>
+        </BottomSheet>
       )}
     </div>
   );

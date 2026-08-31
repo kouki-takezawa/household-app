@@ -2,12 +2,12 @@
 
 import { useMemo } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   Area,
   AreaChart,
   CartesianGrid,
   Cell,
-  Legend,
   Pie,
   PieChart,
   ResponsiveContainer,
@@ -24,6 +24,7 @@ import {
 } from "@/lib/types";
 import { ColorAvatar } from "@/components/ColorAvatar";
 import { EmptyState } from "@/components/EmptyState";
+import { chartTooltipStyle } from "@/lib/chartTheme";
 
 function latestSnapshot(snapshots: AssetSnapshot[], accountId: string) {
   return snapshots
@@ -38,6 +39,7 @@ export default function AssetsClient({
   accounts: AssetAccount[];
   initialSnapshots: AssetSnapshot[];
 }) {
+  const router = useRouter();
   const snapshots = initialSnapshots;
 
   const accountById = useMemo(() => {
@@ -63,10 +65,12 @@ export default function AssetsClient({
       if (!snapshot) continue;
       map.set(account.type, (map.get(account.type) ?? 0) + snapshot.value);
     }
+    const allocTotal = [...map.values()].reduce((s, v) => s + v, 0);
     return [...map.entries()].map(([type, value]) => ({
       name: TYPE_LABEL[type],
       value,
       color: TYPE_COLOR[type],
+      percent: allocTotal > 0 ? (value / allocTotal) * 100 : 0,
     }));
   }, [latestByAccount]);
 
@@ -93,9 +97,14 @@ export default function AssetsClient({
   return (
     <div className="flex flex-col gap-6">
       <section>
-        <h2 className="mb-2 px-1 text-[13px] font-semibold uppercase tracking-wide text-muted">
-          資産総額
-        </h2>
+        <div className="mb-2 flex items-center justify-between px-1">
+          <h2 className="text-[13px] font-semibold uppercase tracking-wide text-muted">
+            資産総額
+          </h2>
+          <Link href="/settings?tab=assets" className="btn-add">
+            ＋ 口座を追加
+          </Link>
+        </div>
         <div className="rounded-2xl bg-surface p-4 shadow-card ring-1 ring-line-soft">
           <p className="text-[26px] font-bold tabular-nums text-brand">{formatYen(total)}</p>
           <p className="mt-1 text-[12px] text-muted">最新のスナップショット合計</p>
@@ -110,22 +119,36 @@ export default function AssetsClient({
           <div className="h-56">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
-                <Pie
-                  data={allocation}
-                  dataKey="value"
-                  nameKey="name"
-                  cx="50%"
-                  cy="50%"
-                  outerRadius={80}
-                  label={(d: { name?: string }) => d.name ?? ""}
-                >
+                <Pie data={allocation} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80}>
                   {allocation.map((entry) => (
                     <Cell key={entry.name} fill={entry.color} />
                   ))}
                 </Pie>
-                <Tooltip formatter={(v) => formatYen(Number(v ?? 0))} />
+                <Tooltip formatter={(v) => formatYen(Number(v ?? 0))} {...chartTooltipStyle()} />
               </PieChart>
             </ResponsiveContainer>
+          </div>
+          <div className="mt-3 flex flex-col gap-2.5">
+            {allocation.map((a) => (
+              <div key={a.name} className="flex items-center gap-3">
+                <span className="h-2.5 w-2.5 flex-shrink-0 rounded-full" style={{ backgroundColor: a.color }} />
+                <p className="w-28 flex-shrink-0 truncate text-[12px] text-foreground" title={a.name}>
+                  {a.name}
+                </p>
+                <div className="h-2 flex-1 overflow-hidden rounded-full bg-track">
+                  <div
+                    className="h-full rounded-full transition-all"
+                    style={{ width: `${a.percent}%`, backgroundColor: a.color }}
+                  />
+                </div>
+                <p className="w-11 flex-shrink-0 text-right text-[12px] tabular-nums text-muted">
+                  {a.percent.toFixed(0)}%
+                </p>
+                <p className="w-24 flex-shrink-0 text-right text-[12px] font-semibold tabular-nums text-foreground">
+                  {formatYen(a.value)}
+                </p>
+              </div>
+            ))}
           </div>
         </section>
       )}
@@ -146,8 +169,7 @@ export default function AssetsClient({
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--line)" />
               <XAxis dataKey="date" fontSize={12} stroke="var(--muted)" />
               <YAxis fontSize={12} stroke="var(--muted)" tickFormatter={(v) => `${v / 10000}万`} />
-              <Tooltip formatter={(v) => formatYen(Number(v ?? 0))} />
-              <Legend />
+              <Tooltip formatter={(v) => formatYen(Number(v ?? 0))} {...chartTooltipStyle()} />
               <Area
                 type="monotone"
                 dataKey="資産合計"
@@ -166,6 +188,18 @@ export default function AssetsClient({
           資産口座一覧
         </h2>
         <div className="divide-y divide-line-soft rounded-2xl bg-surface shadow-card ring-1 ring-line-soft">
+          {latestByAccount.length === 0 && (
+            <EmptyState
+              icon={
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-5 w-5">
+                  <path d="M4 19V10M10 19V5M16 19v-7M21 19H3" />
+                </svg>
+              }
+              message="まだ口座が登録されていません"
+              actionLabel="口座を追加"
+              onAction={() => router.push("/settings?tab=assets")}
+            />
+          )}
           {latestByAccount.map(({ account, snapshot }) => (
             <Link
               key={account.id}
@@ -204,6 +238,10 @@ export default function AssetsClient({
                 </svg>
               }
               message="記録はまだありません"
+              actionLabel={accounts.length > 0 ? "残高を記録" : "口座を追加"}
+              onAction={() =>
+                router.push(accounts.length > 0 ? `/assets/${accounts[0].id}` : "/settings?tab=assets")
+              }
             />
           )}
           {history.map((s) => {

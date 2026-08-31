@@ -11,7 +11,11 @@ export function Sparkline({
 
   const min = Math.min(...values);
   const max = Math.max(...values);
-  const range = max - min || 1;
+  const avg = values.reduce((s, v) => s + v, 0) / values.length;
+  // min-max だけで正規化すると、平均に対してごくわずかな変動でも画面いっぱいの
+  // 急な山谷に見えてしまう（誇張表現になる）。平均値の10%を振れ幅の下限として
+  // 確保し、小さな変動はなだらかな線として見せる。
+  const range = Math.max(max - min, avg * 0.1) || 1;
   const step = width / (values.length - 1);
 
   const points = values.map((v, i) => {
