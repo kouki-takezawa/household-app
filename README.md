@@ -1,6 +1,77 @@
+# 家計簿・日程表・資産管理アプリ（household-app）
+
+家族で共有して使うことを前提にした、**家計簿（収支管理）・日程表（家族カレンダー）・資産管理（貯蓄/投資の推移管理）を1つに統合したWebアプリ**です。個別アカウントは作らず、世帯共通の合言葉（パスコード）でログインし、家族全員で同じデータを見る・記録することを想定しています。
+
 🔗 **本番URL**: [https://amber-seven-31.vercel.app](https://amber-seven-31.vercel.app)
 
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+## 目的・背景
+
+- お小遣い帳的なアプリではなく、「家計」「予定」「資産」という家庭運営に必要な3つの記録を1つの画面群にまとめ、家族の誰か1人がスマホから片手で使えることを目指しています。
+- 個人アカウント管理を避け、世帯共通の1パスワードでログインするシンプルな運用にすることで、家族間の導入・利用のハードルを下げています（ログインとは別に「メンバー」という概念を持たせ、誰の支出・予定・資産かを色分けして紐付けられます）。
+- データの永続化には専用サーバーやDBを立てず、**Googleスプレッドシート + Google Apps Script (GAS)** を簡易バックエンド／APIとして利用しています。個人開発・家庭内利用のスケールで、追加コストなく運用できることを重視した構成です。
+- 詳細な要件・画面仕様・データモデル・今後の改善候補は [SPEC.md](SPEC.md) にまとめています。
+
+## 主な機能
+
+### ダッシュボード（ホーム画面）
+- 資産総額を大きく表示し、先月比の増減（▲/▼%）と直近6ヶ月のスパークラインを表示
+- 今月の収入・支出・差引の3カードサマリー
+- 直近の予定一覧（タップで日程詳細画面へ）
+
+### 家計簿
+- 収入・支出の記録（日付・金額・カテゴリ・メモ・記録者（メンバー））のCRUD
+- カテゴリ分類（食費・光熱費・住居費など初期カテゴリ＋カスタム追加）
+- 月次・年次切り替え表示、カテゴリ別内訳（円グラフ＋横棒グラフ）、月別/年別推移グラフ
+
+### 日程表
+- 予定のCRUD、月表示・週表示のカレンダーUI
+- メンバーごとの色分け表示・フィルター
+- 繰り返し予定（毎週・毎月など）に対応
+- 予定をタップすると横スライドの詳細画面へ遷移し、そこから編集・削除
+
+### 資産管理
+- 現金・銀行預金（普通/定期）・投資信託/株式/ETFなどの「資産口座」を登録
+- 任意のタイミングで残高・評価額のスナップショットを記録（自動連携ではなく手動入力）
+- 全口座合計の資産推移エリアチャート、資産配分（アセットアロケーション）円グラフ
+- 資産口座ごとの詳細画面（推移グラフ・記録履歴・スナップショットの追加/編集/削除）
+
+### 共通UI
+- モバイル（`md`未満）はボトムタブバー、デスクトップ（`md`以上）は左サイドバーナビゲーション
+- ダークモードはOSの配色設定（`prefers-color-scheme`）に自動追従
+- 保存・削除はトースト通知でフィードバック、一覧が空の場合はアイコン付き空状態表示
+- 横断検索（`GlobalSearch`）、確認ダイアログ（`ConfirmDialog`）などをカスタムコンポーネントで実装
+
+## 技術スタック
+
+| 分類 | 使用技術 |
+| --- | --- |
+| フレームワーク | [Next.js](https://nextjs.org) 16 (App Router) + TypeScript |
+| UI | React 19、Tailwind CSS 4 |
+| グラフ | [Recharts](https://recharts.org/) |
+| データ永続化 / API | Google スプレッドシート + Google Apps Script（Webアプリとしてデプロイし `doGet`/`doPost` をREST風APIとして利用） |
+| 認証 | 世帯共通の1パスコードによる簡易ログイン（個別アカウントなし） |
+| テスト | [Vitest](https://vitest.dev/)（ユニットテスト）、[Playwright](https://playwright.dev/)（手動での画面確認用） |
+| デプロイ先 | [Vercel](https://vercel.com/) |
+
+### Google Apps Script (GAS) との連携について
+
+このアプリは専用のバックエンドサーバーを持たず、Googleスプレッドシートをそのままデータベースとして使っています。
+
+1. [`gas/Code.gs`](gas/Code.gs) をGoogle Apps Scriptのプロジェクトに貼り付けて `setupDatabase` を実行すると、`Members` / `Categories` / `Transactions` / `Events` / `AssetAccounts` / `AssetSnapshots` の6シートを持つスプレッドシートが自動生成されます（初期データ入り）。
+2. そのGASプロジェクトを「ウェブアプリ」としてデプロイすると、`doGet`（一覧取得）・`doPost`（作成・更新・削除）が有効になり、スプレッドシートがそのままJSON APIとして機能します。
+3. Next.js側は [`src/lib/gas.ts`](src/lib/gas.ts) から、環境変数 `GAS_API_URL`（デプロイ後のWebアプリURL）に対して `fetch` でアクセスします。GET結果は30秒キャッシュしつつ、データ変更時は `revalidatePath` でキャッシュを破棄することで、遅くなりがちなGASのレスポンスを画面遷移では感じさせない設計にしています。
+
+## ディレクトリ構成
+
+```
+src/app/(app)/        認証後の画面（ダッシュボード・家計簿・日程表・資産管理・設定）
+src/app/login/        ログイン画面
+src/components/       共通UIコンポーネント（トースト、確認ダイアログ、空状態表示など）
+src/lib/              ドメインロジック・GAS連携・認証・型定義
+src/lib/__tests__/    Vitestによるユニットテスト
+gas/Code.gs           スプレッドシートDBのセットアップ用 Google Apps Script
+SPEC.md               詳細仕様書（機能仕様・データモデル・既知の課題など）
+```
 
 ## セキュリティ研究デモについて（ログイン画面）
 
@@ -13,37 +84,43 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 - **パスコードの変更**: このデモを安全に組み込むため、実際のログイン用パスコードは **`0607`** に変更しました（[src/lib/auth.ts](src/lib/auth.ts) / `.env` の `APP_PASSCODE`）。旧パスコード `0315` はログインには使用できず、デモの発火専用の値になっています。
 - **本番環境（Vercel等）への反映**: デフォルト値はコード側で `0607` に変更済みですが、デプロイ先で環境変数 `APP_PASSCODE` を明示的に設定している場合は、そちらも `0607` に更新する必要があります。
 
-## Getting Started
+## セットアップ
 
-First, run the development server:
+### 1. 環境変数の設定
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+`.env.example` を参考に `.env.local` を作成してください。
+
+```
+GAS_API_URL=https://script.google.com/macros/s/xxxxxxxx/exec
+APP_PASSCODE=0607
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+- `GAS_API_URL`: 上記「Google Apps Script (GAS) との連携について」の手順でデプロイしたWebアプリのURL
+- `APP_PASSCODE`: ログイン用の合言葉（世帯共通）
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 2. 依存パッケージのインストールと開発サーバーの起動
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm install
+npm run dev
+```
 
-## Learn More
+[http://localhost:3000](http://localhost:3000) を開くとアプリが表示されます。
 
-To learn more about Next.js, take a look at the following resources:
+### その他の開発コマンド
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+npm run build   # 本番ビルド
+npm run start   # 本番ビルドの起動
+npm run lint    # ESLint
+npm run test    # Vitestによるユニットテスト実行
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## デプロイ
 
-## Deploy on Vercel
+[Vercel](https://vercel.com/) を利用したデプロイを想定しています。デプロイ時は上記の環境変数（`GAS_API_URL` / `APP_PASSCODE`）をVercel側にも設定してください。
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 参考
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- [Next.js Documentation](https://nextjs.org/docs)
+- [Google Apps Script](https://developers.google.com/apps-script)
