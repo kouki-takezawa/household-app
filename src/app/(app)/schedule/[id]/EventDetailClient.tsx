@@ -233,7 +233,7 @@ export default function EventDetailClient({
           <div className="flex items-start gap-3">
             <ColorAvatar label={member?.name ?? "?"} color={member?.color} />
             <div className="min-w-0">
-              <h2 className="text-[19px] font-bold text-foreground">{event.title}</h2>
+              <h2 className="text-[19px] font-semibold text-foreground">{event.title}</h2>
               <p className="mt-1 text-[14px] text-muted">{formatEventSchedule(event)}</p>
             </div>
           </div>

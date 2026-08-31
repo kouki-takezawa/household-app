@@ -56,7 +56,7 @@ export function SlidePage({
             <path d="m15 19-7-7 7-7" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </button>
-        <h1 className="truncate text-[17px] font-bold text-foreground">{title}</h1>
+        <h1 className="truncate text-[17px] font-semibold text-foreground">{title}</h1>
       </header>
       <main className="mx-auto w-full max-w-3xl flex-1 overflow-y-auto px-4 pb-28">
         {children}

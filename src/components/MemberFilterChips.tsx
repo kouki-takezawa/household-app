@@ -34,7 +34,7 @@ export function MemberFilterChips({
             onClick={() => onToggle(m.id)}
             aria-pressed={isSelected}
             className={clsx(
-              "flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[12px] font-medium transition-colors",
+              "state-layer flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[12px] font-medium transition-colors",
               isSelected ? "bg-surface text-foreground shadow-sm" : "text-muted"
             )}
           >

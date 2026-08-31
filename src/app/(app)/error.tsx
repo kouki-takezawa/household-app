@@ -10,7 +10,7 @@ export default function AppError({ reset }: { error: Error & { digest?: string }
         </svg>
       </span>
       <div>
-        <h1 className="text-[17px] font-bold text-foreground">読み込みに失敗しました</h1>
+        <h1 className="text-[17px] font-semibold text-foreground">読み込みに失敗しました</h1>
         <p className="mt-1 text-[13px] leading-relaxed text-muted">
           通信状況をご確認のうえ、もう一度お試しください。
           <br />

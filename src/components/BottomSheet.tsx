@@ -28,7 +28,7 @@ export function BottomSheet({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mx-auto mb-3 h-1.5 w-10 rounded-full bg-line sm:hidden" />
-        <h3 className="mb-4 text-[17px] font-bold text-foreground">{title}</h3>
+        <h3 className="mb-4 text-[17px] font-semibold text-foreground">{title}</h3>
         {children}
       </div>
     </div>

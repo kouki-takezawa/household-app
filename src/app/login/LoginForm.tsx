@@ -72,7 +72,7 @@ export default function LoginForm() {
       <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-brand text-3xl shadow-lg shadow-brand/30">
         🏡
       </div>
-      <h1 className="mb-1 text-center text-xl font-bold text-foreground">
+      <h1 className="mb-1 text-center text-xl font-semibold text-foreground">
         わが家の家計・資産管理
       </h1>
       <p className="mb-8 text-center text-sm text-muted">
