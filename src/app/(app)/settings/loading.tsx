@@ -1,4 +1,4 @@
-import { Skeleton, SkeletonList } from "@/components/Skeleton";
+import { Skeleton, SkeletonCollapsible, SkeletonList } from "@/components/Skeleton";
 
 export default function SettingsLoading() {
   return (
@@ -8,7 +8,7 @@ export default function SettingsLoading() {
         <Skeleton className="mb-2 h-3 w-40" />
         <SkeletonList rows={3} />
       </section>
-      <Skeleton className="h-56 w-full rounded-2xl" />
+      <SkeletonCollapsible />
     </div>
   );
 }

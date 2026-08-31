@@ -52,8 +52,12 @@ export default async function HomePage() {
 
       <section>
         <p className="px-1 text-[13px] font-medium text-muted">資産総額</p>
-        <div className="mt-2 rounded-[28px] bg-surface p-6 shadow-card-lg ring-1 ring-line-soft">
-          <p className="text-[44px] font-bold leading-none tracking-tight tabular-nums text-foreground">
+        {/* カードの角丸は rounded-2xl(16px)を上限にする方針だが、このヒーロー
+            カードだけは"最重要"を示すため1段階上の rounded-3xl(24px)まで許容。
+            背景もブランドを薄く帯びさせ、同じ白一色が続く他のカードと
+            ワンテンポ違う「表面のリズム」を作っている。 */}
+        <div className="mt-2 rounded-3xl bg-gradient-to-b from-brand/[0.06] to-surface p-6 shadow-card-lg ring-1 ring-line-soft">
+          <p className="text-numeral text-[44px] font-bold leading-none text-foreground">
             {formatYen(assetsTotal)}
           </p>
           {assetsDelta !== null && (
@@ -97,7 +101,7 @@ export default async function HomePage() {
               </span>
               収入
             </div>
-            <p className="mt-1.5 text-[19px] font-bold tabular-nums text-emerald-600">
+            <p className="text-numeral mt-1.5 text-[19px] font-bold text-emerald-600">
               {formatYen(income)}
             </p>
           </div>
@@ -110,26 +114,34 @@ export default async function HomePage() {
               </span>
               支出
             </div>
-            <p className="mt-1.5 text-[19px] font-bold tabular-nums text-rose-500">
+            <p className="text-numeral mt-1.5 text-[19px] font-bold text-rose-500">
               {formatYen(expense)}
             </p>
           </div>
           <div className="rounded-2xl bg-surface p-3.5 shadow-card ring-1 ring-line-soft">
+            {/* このカードだけアイコンをブランドグリーンにしていなかった
+                （差引はプラスにもマイナスにもなる中立的な値のため）。
+                1画面に何箇所もブランド色が同時発光するのを避け、色の
+                意味を保つ（Revolutの「primary色は希少に保つ」原則）。 */}
             <div className="flex items-center gap-1.5 text-[11px] text-muted">
-              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-brand/10 text-brand">
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-track text-subtle">
                 <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" className="h-3 w-3">
                   <path d="M3 8.5h10M9.5 4.5 13 8.5l-3.5 4" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </span>
               差引
             </div>
-            <p className="mt-1.5 text-[19px] font-bold tabular-nums text-foreground">
+            <p className="text-numeral mt-1.5 text-[19px] font-bold text-foreground">
               {formatYen(balance)}
             </p>
           </div>
         </div>
       </section>
 
+      {/* 「今月のサマリーを見る」ゾーンと「一覧を眺める」ゾーンの意味的な区切りを
+          はっきりさせるため、通常のカード間余白（gap-7=28px）に加えてこの
+          グループだけ少し余分に間隔を空ける（section spacing トークン相当）。 */}
+      <div className="flex flex-col gap-7" style={{ marginTop: "var(--space-md)" }}>
       <section>
         <div className="mb-2 flex items-center justify-between px-1">
           <h2 className="text-[13px] font-semibold uppercase tracking-wide text-muted">
@@ -221,6 +233,7 @@ export default async function HomePage() {
           日程表を見る →
         </Link>
       </section>
+      </div>
     </div>
   );
 }

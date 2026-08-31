@@ -39,8 +39,11 @@ export function ConfirmProvider({ children }: { children: React.ReactNode }) {
           aria-modal="true"
           onClick={() => respond(false)}
         >
+          {/* ボトムシート（z-50, bg-surface-2）のさらに上に重なるダイアログなので、
+              暗色サーフェスの階段をもう1段上げて面の重なりを区別できるように
+              する（ライトモードでは全段が同値のため見た目は変わらない）。 */}
           <div
-            className="w-full max-w-xs rounded-3xl bg-surface p-5 shadow-2xl"
+            className="w-full max-w-xs rounded-3xl bg-surface-3 p-5 shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
             <h3 className="text-[16px] font-bold text-foreground">{state.title}</h3>

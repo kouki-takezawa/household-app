@@ -26,6 +26,7 @@ import {
 import { addTransaction, editTransaction, removeTransaction } from "@/lib/actions";
 import { ColorAvatar } from "@/components/ColorAvatar";
 import { EmptyState } from "@/components/EmptyState";
+import { Collapsible } from "@/components/Collapsible";
 import { BottomSheet, SheetActions } from "@/components/BottomSheet";
 import { AmountField } from "@/components/AmountField";
 import { MemberFilterChips } from "@/components/MemberFilterChips";
@@ -288,7 +289,7 @@ export default function BudgetClient({
             type="button"
             onClick={() => setPeriodMode("month")}
             className={`rounded-lg px-3 py-1.5 font-semibold transition-colors ${
-              periodMode === "month" ? "bg-surface text-brand shadow-sm" : "text-subtle"
+              periodMode === "month" ? "bg-surface text-foreground shadow-sm" : "text-subtle"
             }`}
           >
             月次
@@ -297,7 +298,7 @@ export default function BudgetClient({
             type="button"
             onClick={() => setPeriodMode("year")}
             className={`rounded-lg px-3 py-1.5 font-semibold transition-colors ${
-              periodMode === "year" ? "bg-surface text-brand shadow-sm" : "text-subtle"
+              periodMode === "year" ? "bg-surface text-foreground shadow-sm" : "text-subtle"
             }`}
           >
             年次
@@ -353,64 +354,92 @@ export default function BudgetClient({
         </div>
       </section>
 
-      {categoryBreakdown.length > 0 && (
-        <section className="rounded-2xl bg-surface p-4 shadow-card ring-1 ring-line-soft">
-          <h2 className="mb-2 text-[13px] font-semibold uppercase tracking-wide text-muted">
-            カテゴリ別支出
-          </h2>
-          <div className="h-56">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie data={categoryBreakdown} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80}>
-                  {categoryBreakdown.map((entry) => (
-                    <Cell key={entry.name} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip formatter={(v) => formatYen(Number(v ?? 0))} {...chartTooltipStyle()} />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-          <div className="mt-3 flex flex-col gap-2.5">
-            {categoryBreakdown.map((c) => (
-              <div key={c.name} className="flex items-center gap-3">
-                <p className="w-24 flex-shrink-0 truncate text-[12px] text-foreground sm:w-28" title={c.name}>
-                  {c.name}
-                </p>
-                <div className="h-2 flex-1 overflow-hidden rounded-full bg-track">
-                  <div
-                    className="h-full rounded-full transition-all"
-                    style={{ width: `${c.percent}%`, backgroundColor: c.color }}
-                  />
+      <Collapsible
+        title="グラフを見る"
+        icon={
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-4 w-4">
+            <path d="M2 13.5h12M4.5 13.5V8M8 13.5V3.5M11.5 13.5V6" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        }
+      >
+        <div className="flex flex-col gap-6 pt-1">
+          <div>
+            <h3 className="mb-2 text-[12px] font-semibold text-subtle">カテゴリ別支出</h3>
+            {categoryBreakdown.length > 0 ? (
+              <>
+                <div className="h-56">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie data={categoryBreakdown} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80}>
+                        {categoryBreakdown.map((entry) => (
+                          <Cell key={entry.name} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip formatter={(v) => formatYen(Number(v ?? 0))} {...chartTooltipStyle()} />
+                    </PieChart>
+                  </ResponsiveContainer>
                 </div>
-                <p className="w-11 flex-shrink-0 text-right text-[12px] tabular-nums text-muted">
-                  {c.percent.toFixed(0)}%
-                </p>
+                <div className="mt-3 flex flex-col gap-2.5">
+                  {categoryBreakdown.map((c) => (
+                    <div key={c.name} className="flex items-center gap-3">
+                      <p className="w-24 flex-shrink-0 truncate text-[12px] text-foreground sm:w-28" title={c.name}>
+                        {c.name}
+                      </p>
+                      <div className="h-2 flex-1 overflow-hidden rounded-full bg-track">
+                        <div
+                          className="h-full rounded-full transition-all"
+                          style={{ width: `${c.percent}%`, backgroundColor: c.color }}
+                        />
+                      </div>
+                      <p className="w-11 flex-shrink-0 text-right text-[12px] tabular-nums text-muted">
+                        {c.percent.toFixed(0)}%
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <div className="flex h-56 flex-col items-center justify-center gap-2">
+                <svg viewBox="0 0 80 80" className="h-20 w-20 text-line" fill="none">
+                  <circle cx="40" cy="40" r="32" stroke="currentColor" strokeWidth="14" strokeDasharray="70 130" />
+                  <circle
+                    cx="40"
+                    cy="40"
+                    r="32"
+                    stroke="currentColor"
+                    strokeWidth="14"
+                    strokeDasharray="35 165"
+                    strokeDashoffset="-70"
+                    opacity="0.5"
+                  />
+                </svg>
+                <p className="text-[12px] text-muted">支出を記録すると内訳が表示されます</p>
               </div>
-            ))}
+            )}
           </div>
-        </section>
-      )}
 
-      <section className="rounded-2xl bg-surface p-4 shadow-card ring-1 ring-line-soft">
-        <h2 className="mb-2 text-[13px] font-semibold uppercase tracking-wide text-muted">
-          {periodMode === "month" ? "月別推移（直近6ヶ月）" : "年別推移"}
-        </h2>
-        <div className="h-56">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={trend}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--line)" />
-              <XAxis dataKey="label" fontSize={12} stroke="var(--muted)" />
-              <YAxis fontSize={12} stroke="var(--muted)" tickFormatter={(v) => `${v / 10000}万`} />
-              <Tooltip formatter={(v) => formatYen(Number(v ?? 0))} {...chartTooltipStyle()} />
-              <Legend wrapperStyle={chartLegendStyle()} />
-              <Bar dataKey="収入" fill="#10b981" radius={[4, 4, 0, 0]} />
-              <Bar dataKey="支出" fill="#f43f5e" radius={[4, 4, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
+          <div>
+            <h3 className="mb-2 text-[12px] font-semibold text-subtle">
+              {periodMode === "month" ? "月別推移（直近6ヶ月）" : "年別推移"}
+            </h3>
+            <div className="h-56">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={trend}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--line)" />
+                  <XAxis dataKey="label" fontSize={12} stroke="var(--muted)" />
+                  <YAxis fontSize={12} stroke="var(--muted)" tickFormatter={(v) => `${v / 10000}万`} />
+                  <Tooltip formatter={(v) => formatYen(Number(v ?? 0))} {...chartTooltipStyle()} />
+                  <Legend wrapperStyle={chartLegendStyle()} />
+                  <Bar dataKey="収入" fill="#10b981" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="支出" fill="#f43f5e" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
         </div>
-      </section>
+      </Collapsible>
 
-      <section>
+      <section style={{ marginTop: "var(--space-xs)" }}>
         <div className="mb-2 flex items-center justify-between px-1">
           <h2 className="text-[13px] font-semibold uppercase tracking-wide text-muted">
             {isSearching ? "検索結果" : "明細一覧"}
@@ -470,7 +499,7 @@ export default function BudgetClient({
                     {category?.name}
                     {t.memo ? ` ・ ${t.memo}` : ""}
                   </p>
-                  <p className="text-[12px] text-muted">
+                  <p className="truncate text-[12px] text-muted">
                     {t.date}
                     {member ? ` ・ ${member.name}` : ""}
                   </p>

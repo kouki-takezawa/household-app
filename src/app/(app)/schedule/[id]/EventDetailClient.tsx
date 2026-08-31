@@ -209,14 +209,14 @@ export default function EventDetailClient({
             <button
               type="button"
               onClick={() => setEditing(false)}
-              className="flex-1 rounded-full border border-line py-3 text-[15px] font-semibold text-subtle active:opacity-70"
+              className="btn-lg flex-1 border border-line text-subtle active:opacity-70"
             >
               キャンセル
             </button>
             <button
               type="submit"
               disabled={saving}
-              className="flex-1 rounded-full bg-brand py-3 text-[15px] font-semibold text-white shadow-sm shadow-brand/30 transition-transform active:scale-[0.98] disabled:opacity-60"
+              className="btn-lg flex-1 bg-brand text-white shadow-sm shadow-brand/30 active:scale-[0.98] disabled:opacity-60"
             >
               {saving ? "保存中…" : "保存"}
             </button>
@@ -262,14 +262,14 @@ export default function EventDetailClient({
           <button
             type="button"
             onClick={() => setEditing(true)}
-            className="flex-1 rounded-full border border-line py-3 text-[15px] font-semibold text-foreground active:opacity-70"
+            className="btn-lg flex-1 border border-line text-foreground active:opacity-70"
           >
             編集
           </button>
           <button
             type="button"
             onClick={handleDelete}
-            className="flex-1 rounded-full border border-rose-200 py-3 text-[15px] font-semibold text-rose-500 active:bg-rose-500/10"
+            className="btn-lg flex-1 border border-rose-200 text-rose-500 active:bg-rose-500/10"
           >
             削除
           </button>

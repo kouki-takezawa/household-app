@@ -105,7 +105,7 @@ export default function LoginForm() {
         <button
           type="submit"
           disabled={pending || locked}
-          className="mt-4 w-full rounded-full bg-brand py-3.5 text-[15px] font-semibold text-white shadow-sm shadow-brand/30 transition-transform active:scale-[0.98] active:bg-brand-dark disabled:opacity-60"
+          className="btn-lg mt-4 w-full bg-brand text-white shadow-sm shadow-brand/30 active:scale-[0.98] active:bg-brand-dark disabled:opacity-60"
         >
           {locked ? `${remainingSeconds}秒後に再試行` : pending ? "確認中…" : "ログイン"}
         </button>

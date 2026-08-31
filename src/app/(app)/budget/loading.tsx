@@ -1,4 +1,4 @@
-import { Skeleton, SkeletonChart, SkeletonList, SkeletonStatRow } from "@/components/Skeleton";
+import { Skeleton, SkeletonCollapsible, SkeletonList, SkeletonStatRow } from "@/components/Skeleton";
 
 export default function BudgetLoading() {
   return (
@@ -8,8 +8,7 @@ export default function BudgetLoading() {
         <Skeleton className="h-9 w-20 rounded-full" />
       </section>
       <SkeletonStatRow />
-      <SkeletonChart label="カテゴリ別支出" />
-      <SkeletonChart label="月別推移" />
+      <SkeletonCollapsible />
       <section>
         <Skeleton className="mb-2 h-3 w-20" />
         <SkeletonList rows={5} />

@@ -19,11 +19,18 @@ import {
 } from "@/lib/actions";
 import { ColorAvatar } from "@/components/ColorAvatar";
 import { EmptyState } from "@/components/EmptyState";
+import { Collapsible } from "@/components/Collapsible";
 import { useToast } from "@/components/Toast";
 import { useConfirm } from "@/components/ConfirmDialog";
 import { fieldClass, FieldError } from "@/components/form";
 import { IconButton, TrashIcon } from "@/components/icons";
 import { generateId } from "@/lib/id";
+
+const PLUS_ICON = (
+  <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4">
+    <path d="M8 3v10M3 8h10" strokeLinecap="round" />
+  </svg>
+);
 
 type Tab = "members" | "categories" | "assets";
 function isTab(value: string | null): value is Tab {
@@ -245,7 +252,7 @@ export default function SettingsClient({
           onClick={() => setTab("members")}
           className={clsx(
             "flex-1 rounded-lg py-2 font-semibold transition-colors",
-            tab === "members" ? "bg-surface text-brand shadow-sm" : "text-subtle"
+            tab === "members" ? "bg-surface text-foreground shadow-sm" : "text-subtle"
           )}
         >
           メンバー
@@ -255,7 +262,7 @@ export default function SettingsClient({
           onClick={() => setTab("categories")}
           className={clsx(
             "flex-1 rounded-lg py-2 font-semibold transition-colors",
-            tab === "categories" ? "bg-surface text-brand shadow-sm" : "text-subtle"
+            tab === "categories" ? "bg-surface text-foreground shadow-sm" : "text-subtle"
           )}
         >
           カテゴリ
@@ -265,7 +272,7 @@ export default function SettingsClient({
           onClick={() => setTab("assets")}
           className={clsx(
             "flex-1 rounded-lg py-2 font-semibold transition-colors",
-            tab === "assets" ? "bg-surface text-brand shadow-sm" : "text-subtle"
+            tab === "assets" ? "bg-surface text-foreground shadow-sm" : "text-subtle"
           )}
         >
           資産口座
@@ -291,11 +298,8 @@ export default function SettingsClient({
             </div>
           </section>
 
-          <form
-            onSubmit={addMember}
-            className="rounded-2xl bg-surface p-4 shadow-card ring-1 ring-line-soft"
-          >
-            <h3 className="mb-3 text-[15px] font-semibold text-foreground">メンバーを追加</h3>
+          <Collapsible title="メンバーを追加" icon={PLUS_ICON} defaultOpen={members.length === 0}>
+          <form onSubmit={addMember}>
             <div className="mb-3">
               <input
                 type="text"
@@ -330,6 +334,7 @@ export default function SettingsClient({
               追加
             </button>
           </form>
+          </Collapsible>
         </>
       )}
 
@@ -365,11 +370,8 @@ export default function SettingsClient({
             </div>
           </section>
 
-          <form
-            onSubmit={addCategory}
-            className="rounded-2xl bg-surface p-4 shadow-card ring-1 ring-line-soft"
-          >
-            <h3 className="mb-3 text-[15px] font-semibold text-foreground">カテゴリを追加</h3>
+          <Collapsible title="カテゴリを追加" icon={PLUS_ICON} defaultOpen={categories.length === 0}>
+          <form onSubmit={addCategory}>
             <div className="mb-3">
               <input
                 type="text"
@@ -430,6 +432,7 @@ export default function SettingsClient({
               追加
             </button>
           </form>
+          </Collapsible>
         </>
       )}
 
@@ -464,11 +467,8 @@ export default function SettingsClient({
             </div>
           </section>
 
-          <form
-            onSubmit={addAssetAccount}
-            className="rounded-2xl bg-surface p-4 shadow-card ring-1 ring-line-soft"
-          >
-            <h3 className="mb-3 text-[15px] font-semibold text-foreground">資産口座を追加</h3>
+          <Collapsible title="資産口座を追加" icon={PLUS_ICON} defaultOpen={assetAccounts.length === 0}>
+          <form onSubmit={addAssetAccount}>
             <div className="mb-3">
               <input
                 type="text"
@@ -490,7 +490,7 @@ export default function SettingsClient({
                   onClick={() => setAccountType(t)}
                   className={clsx(
                     "flex-1 rounded-lg py-2 text-[13px] font-semibold transition-colors",
-                    accountType === t ? "bg-surface text-brand shadow-sm" : "text-subtle"
+                    accountType === t ? "bg-surface text-foreground shadow-sm" : "text-subtle"
                   )}
                 >
                   {ASSET_TYPE_LABEL[t]}
@@ -519,6 +519,7 @@ export default function SettingsClient({
               追加
             </button>
           </form>
+          </Collapsible>
         </>
       )}
     </div>

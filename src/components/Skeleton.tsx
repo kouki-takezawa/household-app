@@ -50,3 +50,15 @@ export function SkeletonChart({ label }: { label: string }) {
     </div>
   );
 }
+
+/** Collapsible（既定で閉じている）に対応する、折りたたみバー1本分だけの高さのスケルトン。
+ * 中身のグラフ分の高さを事前に確保してしまうと、実データが読み込まれ折りたたみ状態で
+ * 描画された瞬間にレイアウトが縮んでガクつくため、閉じた見た目に合わせておく。 */
+export function SkeletonCollapsible() {
+  return (
+    <div className="flex items-center justify-between rounded-2xl bg-surface p-4 shadow-card ring-1 ring-line-soft">
+      <Skeleton className="h-3.5 w-28" />
+      <Skeleton className="h-4 w-4 rounded" />
+    </div>
+  );
+}

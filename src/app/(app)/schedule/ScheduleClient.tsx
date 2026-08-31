@@ -188,7 +188,7 @@ export default function ScheduleClient({
             onClick={() => setViewMode("month")}
             className={clsx(
               "rounded-lg px-3 py-1.5 font-semibold transition-colors",
-              viewMode === "month" ? "bg-surface text-brand shadow-sm" : "text-subtle"
+              viewMode === "month" ? "bg-surface text-foreground shadow-sm" : "text-subtle"
             )}
           >
             月
@@ -198,7 +198,7 @@ export default function ScheduleClient({
             onClick={() => setViewMode("week")}
             className={clsx(
               "rounded-lg px-3 py-1.5 font-semibold transition-colors",
-              viewMode === "week" ? "bg-surface text-brand shadow-sm" : "text-subtle"
+              viewMode === "week" ? "bg-surface text-foreground shadow-sm" : "text-subtle"
             )}
           >
             週

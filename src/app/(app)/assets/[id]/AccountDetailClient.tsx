@@ -163,19 +163,19 @@ export default function AccountDetailClient({
   return (
     <SlidePage title={account.name} backHref="/assets">
       <div className="flex flex-col gap-5 pt-2">
-        <div className="rounded-2xl bg-surface p-5 shadow-card ring-1 ring-line-soft">
+        <div className="rounded-2xl bg-gradient-to-b from-brand/[0.06] to-surface p-5 shadow-card ring-1 ring-line-soft">
           <p className="text-[13px] text-muted">
             {TYPE_LABEL[account.type]}
             {member ? ` ・ ${member.name}` : ""}
           </p>
-          <p className="mt-1 text-[32px] font-bold leading-tight tabular-nums text-foreground">
+          <p className="text-numeral mt-1 text-[32px] font-bold leading-tight text-foreground">
             {latest ? formatYen(latest.value) : "未記録"}
           </p>
           {latest && <p className="mt-1 text-[12px] text-muted">最終更新 {latest.date}</p>}
           <button
             type="button"
             onClick={openNewForm}
-            className="mt-4 w-full rounded-full bg-brand py-2.5 text-[14px] font-semibold text-white shadow-sm shadow-brand/30 transition-transform active:scale-[0.98]"
+            className="btn-lg mt-4 w-full bg-brand text-white shadow-sm shadow-brand/30 active:scale-[0.98]"
           >
             ＋ 残高・評価額を記録
           </button>
@@ -236,7 +236,7 @@ export default function AccountDetailClient({
                   <p className="truncate text-[15px] font-medium tabular-nums text-foreground">
                     {formatYen(s.value)}
                   </p>
-                  <p className="text-[12px] text-muted">
+                  <p className="truncate text-[12px] text-muted">
                     {s.date}
                     {s.note ? ` ・ ${s.note}` : ""}
                   </p>

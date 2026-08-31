@@ -6,6 +6,11 @@
   --brand: #16a34a;
   --brand-dark: #15803d;
   --surface: #ffffff;
+  /* Linear の surface-1〜4 に倣った、暗色時のみ意味を持つ「面の階段」。
+     ライトモードでは surface と実質同値（白背景の上でこれ以上明度を刻む
+     必要が薄いため）だが、トークンとして常に参照可能にしておく。 */
+  --surface-2: #ffffff;
+  --surface-3: #ffffff;
   --muted: #97a0ac;
   --subtle: #59616d;
   --line: #e6e9ee;
@@ -14,6 +19,20 @@
   --shadow-card: 0 1px 2px rgba(16, 24, 40, 0.04), 0 8px 24px -10px rgba(16, 24, 40, 0.12);
   --shadow-card-lg: 0 2px 6px rgba(16, 24, 40, 0.05), 0 20px 40px -12px rgba(16, 24, 40, 0.16);
   --shadow-nav: 0 12px 32px -8px rgba(16, 24, 40, 0.18);
+
+  /* Wise/Cal.com の DESIGN.md に倣った固定スペーシングスケール。
+     px-3.5 や gap-2.5 のような半端な値の代わりに、新規のコンポーネントは
+     このスケールに沿った値（4/8/12/16/24/32px）を使う。 */
+  --space-xxs: 2px;
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 12px;
+  --space-lg: 16px;
+  --space-xl: 24px;
+  --space-2xl: 32px;
+  /* セクション同士の意味的な区切り専用（Cal.com の spacing.section 相当）。
+     カード内の余白より一段階大きく取り、「ここから話題が変わる」を示す。 */
+  --space-section: 40px;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -23,6 +42,8 @@
     --brand: #22c55e;
     --brand-dark: #16a34a;
     --surface: #18191d;
+    --surface-2: #202226;
+    --surface-3: #26282d;
     --muted: #80868f;
     --subtle: #b4b9c0;
     --line: #26282d;
@@ -40,6 +61,8 @@
   --color-brand: var(--brand);
   --color-brand-dark: var(--brand-dark);
   --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
   --color-muted: var(--muted);
   --color-subtle: var(--subtle);
   --color-line: var(--line);
@@ -102,8 +125,16 @@ input[type="number"]::-webkit-inner-spin-button {
     box-shadow: var(--shadow-nav);
   }
 
-  /* 画面ごとに px-4/px-5・py-2/py-2.5/py-3 とバラつきがちだった「追加」系の
-     主要ボタンのスペーシングを1箇所に集約する。 */
+  /* カードの角丸は rounded-2xl（16px）を上限とする（Cal.com の DESIGN.md に
+     倣ったルール："カードの角丸が大きすぎるとプロフェッショナルではなく
+     コンシューマー向けアプリに見える"）。ヒーローカードなど強調したい要素
+     だけ1段階上の rounded-3xl（24px）まで許容し、それ以上は使わない。 */
+
+  /* 画面ごとに px-4/px-5・py-2/py-2.5/py-3 とバラつきがちだった主要ボタンの
+     高さを3段階（sm/md/lg）に統一する。btn-add は従来どおりヘッダー隅の
+     コンパクトな追加ボタン（sm相当）として残し、フォーム送信・ログインなど
+     「その画面で一番重要な実行ボタン」は btn-lg（48px、Revolut/Appleの
+     プライマリボタン基準）に揃える。 */
   .btn-add {
     display: inline-flex;
     align-items: center;
@@ -119,6 +150,28 @@ input[type="number"]::-webkit-inner-spin-button {
   }
   .btn-add:active {
     transform: scale(0.96);
+  }
+
+  .btn-lg {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 48px;
+    border-radius: 9999px;
+    font-size: 15px;
+    font-weight: 600;
+    transition: transform 0.15s ease;
+  }
+  .btn-lg:active {
+    transform: scale(0.98);
+  }
+
+  /* 金額・資産総額などの主要な数字表示に共通で使う。等幅数字（桁のガタつき
+     防止）に加え、Wise/Revolut/Linear などが見出し級の数字に共通して掛けて
+     いる負のletter-spacingを揃え、「作り込まれた」印象を出す。 */
+  .text-numeral {
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.02em;
   }
 }
 

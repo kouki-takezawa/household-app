@@ -18,8 +18,10 @@ export function BottomSheet({
       role="presentation"
       onClick={onClose}
     >
+      {/* ページ（bg-surface）の上に重なる要素として、暗色時は surface-2 を使う
+          （Linear のサーフェス階段に倣った、シャドウだけに頼らないエレベーション表現）。 */}
       <div
-        className="w-full max-w-sm rounded-t-3xl bg-surface px-5 pt-3 shadow-xl sm:rounded-3xl sm:pt-5"
+        className="w-full max-w-sm rounded-t-3xl bg-surface-2 px-5 pt-3 shadow-xl sm:rounded-3xl sm:pt-5"
         style={{ paddingBottom: "calc(1.5rem + env(safe-area-inset-bottom))" }}
         role="dialog"
         aria-modal="true"
@@ -49,14 +51,14 @@ export function SheetActions({
       <button
         type="button"
         onClick={onCancel}
-        className="flex-1 rounded-full border border-line py-3 text-[15px] font-semibold text-subtle active:opacity-70"
+        className="btn-lg flex-1 border border-line text-subtle active:opacity-70"
       >
         キャンセル
       </button>
       <button
         type="submit"
         disabled={saving}
-        className="flex-1 rounded-full bg-brand py-3 text-[15px] font-semibold text-white shadow-sm shadow-brand/30 transition-transform active:scale-[0.98] disabled:opacity-60"
+        className="btn-lg flex-1 bg-brand text-white shadow-sm shadow-brand/30 active:scale-[0.98] disabled:opacity-60"
       >
         {saving ? savingLabel : submitLabel}
       </button>

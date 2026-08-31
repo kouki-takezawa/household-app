@@ -12,7 +12,10 @@ export function EmptyState({
 }) {
   return (
     <div className="flex flex-col items-center gap-3 p-8 text-center">
-      <span className="flex h-11 w-11 items-center justify-center rounded-full bg-track text-subtle">
+      {/* グレー一色だと空の瞬間だけブランドの温度が消えてしまうため、
+          薄いブランドトーンの背景にする（各ブランドとも空状態やアイコンに
+          アクセントカラーを薄く残す慣習がある）。 */}
+      <span className="flex h-11 w-11 items-center justify-center rounded-full bg-brand/10 text-brand">
         {icon}
       </span>
       <p className="text-[13px] text-muted">{message}</p>

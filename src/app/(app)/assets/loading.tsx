@@ -1,4 +1,4 @@
-import { Skeleton, SkeletonCard, SkeletonChart, SkeletonList } from "@/components/Skeleton";
+import { Skeleton, SkeletonCard, SkeletonCollapsible, SkeletonList } from "@/components/Skeleton";
 
 export default function AssetsLoading() {
   return (
@@ -7,8 +7,7 @@ export default function AssetsLoading() {
         <Skeleton className="mb-2 h-3 w-20" />
         <SkeletonCard />
       </section>
-      <SkeletonChart label="資産配分" />
-      <SkeletonChart label="資産推移" />
+      <SkeletonCollapsible />
       <section>
         <Skeleton className="mb-2 h-3 w-24" />
         <SkeletonList rows={5} />
