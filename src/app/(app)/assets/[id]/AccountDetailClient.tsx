@@ -16,8 +16,12 @@ import {
   type Member,
   ASSET_TYPE_LABEL as TYPE_LABEL,
   findMemberById,
+  formatCurrency,
   formatYen,
+  jpyValue,
   todayStr,
+  unrealizedGain,
+  unrealizedGainPercent,
 } from "@/lib/types";
 import { addAssetSnapshot, editAssetSnapshot, removeAssetSnapshot } from "@/lib/actions";
 import { SlidePage } from "@/components/SlidePage";
@@ -30,11 +34,10 @@ import { useConfirm } from "@/components/ConfirmDialog";
 import { FieldError } from "@/components/form";
 import { describeError } from "@/lib/errors";
 import { chartTooltipStyle } from "@/lib/chartTheme";
-import { totalAssetsAsOf } from "@/lib/dashboard";
 import { generateId } from "@/lib/id";
 
 function emptyForm(today: string) {
-  return { date: today, value: "", note: "" };
+  return { date: today, value: "", note: "", costBasis: "", fxRate: "" };
 }
 
 export default function AccountDetailClient({
@@ -63,17 +66,25 @@ export default function AccountDetailClient({
     [snapshots]
   );
   const latest = history[0];
+  const isForeign = !!account.currency && account.currency !== "JPY";
+  const isInvestment = account.type === "investment";
+  const latestGain = latest ? unrealizedGain(latest) : undefined;
+  const latestGainPercent = latest ? unrealizedGainPercent(latest) : undefined;
 
   // 記録した日そのものではなく、記録がある月ごとに区切って表示する
-  // （月末時点での評価額を1点として繋ぐ）。
+  // （月末時点での評価額を1点として繋ぐ）。他口座と合算するJPY換算ではなく、
+  // この口座自身の通貨のまま（為替変動のノイズを含めずに）推移を見せる。
   const trend = useMemo(() => {
     const monthSet = new Set(snapshots.map((s) => s.date.slice(0, 7)));
     const months = [...monthSet].sort();
-    return months.map((month) => ({
-      date: month.slice(5) + "月",
-      評価額: totalAssetsAsOf([account], snapshots, `${month}-31`),
-    }));
-  }, [snapshots, account]);
+    return months.map((month) => {
+      const monthEnd = `${month}-31`;
+      const upToMonth = [...snapshots]
+        .filter((s) => s.date <= monthEnd)
+        .sort((a, b) => b.date.localeCompare(a.date))[0];
+      return { date: month.slice(5) + "月", 評価額: upToMonth?.value ?? 0 };
+    });
+  }, [snapshots]);
 
   function openNewForm() {
     setEditingId(null);
@@ -85,7 +96,13 @@ export default function AccountDetailClient({
   function openEditForm(snapshot: AssetSnapshot) {
     setEditingId(snapshot.id);
     setValueError(null);
-    setForm({ date: snapshot.date, value: String(snapshot.value), note: snapshot.note ?? "" });
+    setForm({
+      date: snapshot.date,
+      value: String(snapshot.value),
+      note: snapshot.note ?? "",
+      costBasis: snapshot.costBasis !== undefined ? String(snapshot.costBasis) : "",
+      fxRate: snapshot.fxRate !== undefined ? String(snapshot.fxRate) : "",
+    });
     setShowForm(true);
   }
 
@@ -124,6 +141,9 @@ export default function AccountDetailClient({
     setValueError(null);
     setSaving(true);
 
+    const costBasis = isInvestment && form.costBasis !== "" ? Number(form.costBasis) : undefined;
+    const fxRate = isForeign && form.fxRate !== "" ? Number(form.fxRate) : undefined;
+
     if (editingId) {
       const previous = snapshots.find((s) => s.id === editingId);
       const updated: AssetSnapshot = {
@@ -132,6 +152,8 @@ export default function AccountDetailClient({
         date: form.date,
         value,
         note: form.note || undefined,
+        costBasis,
+        fxRate,
       };
       setSnapshots((prev) => prev.map((s) => (s.id === editingId ? updated : s)));
       try {
@@ -151,6 +173,8 @@ export default function AccountDetailClient({
         date: form.date,
         value,
         note: form.note || undefined,
+        costBasis,
+        fxRate,
       };
       setSnapshots((prev) => [...prev, newSnapshot]);
       try {
@@ -174,8 +198,25 @@ export default function AccountDetailClient({
             {member ? ` ・ ${member.name}` : ""}
           </p>
           <p className="text-numeral mt-1 text-[32px] font-bold leading-tight text-foreground">
-            {latest ? formatYen(latest.value) : "未記録"}
+            {latest ? formatCurrency(latest.value, account.currency) : "未記録"}
           </p>
+          {latest && isForeign && (
+            <p className="mt-0.5 text-[13px] text-muted">
+              {latest.fxRate ? `≒${formatYen(jpyValue(latest, account))}` : "為替レート未記録"}
+            </p>
+          )}
+          {latest && latestGain !== undefined && (
+            <p
+              className={`mt-1 text-[13px] font-semibold ${
+                latestGain >= 0 ? "text-emerald-600" : "text-rose-500"
+              }`}
+            >
+              含み損益 {latestGain >= 0 ? "+" : ""}
+              {formatCurrency(latestGain, account.currency)}
+              {latestGainPercent !== undefined &&
+                ` (${latestGainPercent >= 0 ? "+" : ""}${latestGainPercent.toFixed(1)}%)`}
+            </p>
+          )}
           {latest && <p className="mt-1 text-[12px] text-muted">最終更新 {latest.date}</p>}
           <button
             type="button"
@@ -202,8 +243,15 @@ export default function AccountDetailClient({
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--line)" />
                   <XAxis dataKey="date" fontSize={12} stroke="var(--muted)" />
-                  <YAxis fontSize={12} stroke="var(--muted)" tickFormatter={(v) => `${v / 10000}万`} />
-                  <Tooltip formatter={(v) => formatYen(Number(v ?? 0))} {...chartTooltipStyle()} />
+                  <YAxis
+                    fontSize={12}
+                    stroke="var(--muted)"
+                    tickFormatter={(v) => (isForeign ? v.toLocaleString() : `${v / 10000}万`)}
+                  />
+                  <Tooltip
+                    formatter={(v) => formatCurrency(Number(v ?? 0), account.currency)}
+                    {...chartTooltipStyle()}
+                  />
                   <Area
                     type="monotone"
                     dataKey="評価額"
@@ -235,25 +283,43 @@ export default function AccountDetailClient({
                 onAction={openNewForm}
               />
             )}
-            {history.map((s) => (
-              <div key={s.id} className="flex items-center gap-3 p-3.5">
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-[15px] font-medium tabular-nums text-foreground">
-                    {formatYen(s.value)}
-                  </p>
-                  <p className="truncate text-[12px] text-muted">
-                    {s.date}
-                    {s.note ? ` ・ ${s.note}` : ""}
-                  </p>
+            {history.map((s) => {
+              const gain = unrealizedGain(s);
+              return (
+                <div key={s.id} className="flex items-center gap-3 p-3.5">
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-[15px] font-medium tabular-nums text-foreground">
+                      {formatCurrency(s.value, account.currency)}
+                      {isForeign && s.fxRate && (
+                        <span className="ml-1.5 text-[12px] font-normal text-muted">
+                          ≒{formatYen(jpyValue(s, account))}
+                        </span>
+                      )}
+                    </p>
+                    {gain !== undefined && (
+                      <p
+                        className={`text-[12px] font-medium ${
+                          gain >= 0 ? "text-emerald-600" : "text-rose-500"
+                        }`}
+                      >
+                        含み損益 {gain >= 0 ? "+" : ""}
+                        {formatCurrency(gain, account.currency)}
+                      </p>
+                    )}
+                    <p className="truncate text-[12px] text-muted">
+                      {s.date}
+                      {s.note ? ` ・ ${s.note}` : ""}
+                    </p>
+                  </div>
+                  <IconButton label="編集" onClick={() => openEditForm(s)}>
+                    <PencilIcon />
+                  </IconButton>
+                  <IconButton label="削除" variant="danger" onClick={() => handleDelete(s)}>
+                    <TrashIcon />
+                  </IconButton>
                 </div>
-                <IconButton label="編集" onClick={() => openEditForm(s)}>
-                  <PencilIcon />
-                </IconButton>
-                <IconButton label="削除" variant="danger" onClick={() => handleDelete(s)}>
-                  <TrashIcon />
-                </IconButton>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </div>
@@ -286,6 +352,31 @@ export default function AccountDetailClient({
               />
               {valueError && <FieldError>{valueError}</FieldError>}
             </label>
+            {isInvestment && (
+              <label className="text-[12px] text-muted">
+                元本（取得額）・任意
+                <AmountField
+                  value={form.costBasis}
+                  onChange={(raw) => setForm((f) => ({ ...f, costBasis: raw }))}
+                  placeholder="含み損益を計算する場合に入力"
+                />
+              </label>
+            )}
+            {isForeign && (
+              <label className="text-[12px] text-muted">
+                為替レート（1{account.currency} = ?円）・任意
+                <input
+                  type="number"
+                  inputMode="decimal"
+                  step="0.01"
+                  min="0"
+                  value={form.fxRate}
+                  onChange={(e) => setForm((f) => ({ ...f, fxRate: e.target.value }))}
+                  className="mt-1 w-full rounded-xl border border-line bg-surface px-3.5 py-2.5 text-[16px] text-foreground focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
+                  placeholder="例: 150.25"
+                />
+              </label>
+            )}
             <label className="text-[12px] text-muted">
               メモ
               <input

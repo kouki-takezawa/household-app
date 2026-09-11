@@ -1,4 +1,4 @@
-import type { AssetAccount, AssetSnapshot, ScheduleEvent, Transaction } from "./types";
+import { jpyValue, type AssetAccount, type AssetSnapshot, type ScheduleEvent, type Transaction } from "./types";
 
 export function monthlySummary(transactions: Transaction[], currentMonth: string) {
   const thisMonth = transactions.filter((t) => t.date.startsWith(currentMonth));
@@ -27,6 +27,7 @@ export function recentTransactions(transactions: Transaction[], limit = 3) {
   return [...transactions].sort((a, b) => b.date.localeCompare(a.date)).slice(0, limit);
 }
 
+/** 複数口座の合計は通貨がバラバラなことがあるため、必ず円換算してから合算する */
 export function totalAssetsAsOf(
   accounts: AssetAccount[],
   snapshots: AssetSnapshot[],
@@ -37,7 +38,7 @@ export function totalAssetsAsOf(
     const snapshotsForAccount = snapshots
       .filter((s) => s.assetAccountId === account.id && s.date <= asOfDate)
       .sort((a, b) => b.date.localeCompare(a.date));
-    if (snapshotsForAccount[0]) total += snapshotsForAccount[0].value;
+    if (snapshotsForAccount[0]) total += jpyValue(snapshotsForAccount[0], account);
   }
   return total;
 }

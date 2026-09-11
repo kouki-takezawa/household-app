@@ -21,6 +21,8 @@ import {
   ASSET_TYPE_LABEL as TYPE_LABEL,
   ASSET_TYPE_COLOR as TYPE_COLOR,
   formatYen,
+  formatCurrency,
+  jpyValue,
 } from "@/lib/types";
 import { ColorAvatar } from "@/components/ColorAvatar";
 import { EmptyState } from "@/components/EmptyState";
@@ -59,13 +61,16 @@ export default function AssetsClient({
     [accounts, snapshots]
   );
 
-  const total = latestByAccount.reduce((sum, a) => sum + (a.snapshot?.value ?? 0), 0);
+  const total = latestByAccount.reduce(
+    (sum, a) => sum + (a.snapshot ? jpyValue(a.snapshot, a.account) : 0),
+    0
+  );
 
   const allocation = useMemo(() => {
     const map = new Map<AssetAccount["type"], number>();
     for (const { account, snapshot } of latestByAccount) {
       if (!snapshot) continue;
-      map.set(account.type, (map.get(account.type) ?? 0) + snapshot.value);
+      map.set(account.type, (map.get(account.type) ?? 0) + jpyValue(snapshot, account));
     }
     const allocTotal = [...map.values()].reduce((s, v) => s + v, 0);
     return [...map.entries()].map(([type, value]) => ({
@@ -260,7 +265,7 @@ export default function AssetsClient({
                 </p>
               </div>
               <p className="text-[15px] font-semibold tabular-nums text-foreground">
-                {snapshot ? formatYen(snapshot.value) : "―"}
+                {snapshot ? formatCurrency(snapshot.value, account.currency) : "―"}
               </p>
               <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4 flex-shrink-0 text-muted">
                 <path d="m8 5 5 5-5 5" strokeLinecap="round" strokeLinejoin="round" />
@@ -308,7 +313,9 @@ export default function AssetsClient({
                   </p>
                   <p className="text-[12px] text-muted">{s.date}</p>
                 </div>
-                <p className="text-[15px] font-semibold tabular-nums text-foreground">{formatYen(s.value)}</p>
+                <p className="text-[15px] font-semibold tabular-nums text-foreground">
+                  {formatCurrency(s.value, account?.currency)}
+                </p>
               </Link>
             );
           })}

@@ -11,6 +11,7 @@ import {
 import { addEvent, editEvent, removeEvent } from "@/lib/actions";
 import { ColorAvatar } from "@/components/ColorAvatar";
 import { SlidePage } from "@/components/SlidePage";
+import { SheetActions } from "@/components/BottomSheet";
 import { useToast } from "@/components/Toast";
 import { useConfirm } from "@/components/ConfirmDialog";
 import { fieldClass, FieldError } from "@/components/form";
@@ -206,22 +207,7 @@ export default function EventDetailClient({
               placeholder="任意"
             />
           </label>
-          <div className="mt-2 flex gap-2">
-            <button
-              type="button"
-              onClick={() => setEditing(false)}
-              className="btn-lg flex-1 border border-line text-subtle active:opacity-70"
-            >
-              キャンセル
-            </button>
-            <button
-              type="submit"
-              disabled={saving}
-              className="btn-lg flex-1 bg-brand text-white shadow-sm shadow-brand/30 active:scale-[0.98] disabled:opacity-60"
-            >
-              {saving ? "保存中…" : "保存"}
-            </button>
-          </div>
+          <SheetActions onCancel={() => setEditing(false)} submitLabel="保存" saving={saving} />
         </form>
       </SlidePage>
     );

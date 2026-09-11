@@ -16,10 +16,11 @@
  * その場合は「ウェブアプリのURL」の方を渡してください（推奨）。
  *
  * 既にこのスクリプトで作成済みのスプレッドシートを使っている場合（アップデート時）:
- * このファイルの内容を丸ごと貼り替えたあと、関数選択プルダウンで
- * migrateAddMemberIdToTransactions を選んで1回だけ実行してください
- * （Transactions シートに記録者(memberId)列を追加するマイグレーションです。
- * 既に列がある場合は何もしないので、間違って複数回実行しても安全です）。
+ * このファイルの内容を丸ごと貼り替えたあと、関数選択プルダウンで次を順に実行してください
+ * （どちらも、既に列がある場合は何もしないので、間違って複数回実行しても安全です）。
+ * - migrateAddMemberIdToTransactions （Transactions シートに記録者(memberId)列を追加）
+ * - migrateAddInvestmentColumns （AssetAccounts に通貨(currency)列、
+ *   AssetSnapshots に元本(costBasis)・為替レート(fxRate)列を追加）
  */
 
 // ---- シート定義（列の並び = ヘッダー） ----------------------------------
@@ -28,8 +29,8 @@ const SHEET_DEFS = {
   Categories: ["id", "name", "type", "color"],
   Transactions: ["id", "date", "amount", "type", "categoryId", "memberId", "memo"],
   Events: ["id", "title", "startDate", "startTime", "endDate", "endTime", "memberId", "recurrence", "memo"],
-  AssetAccounts: ["id", "name", "type", "memberId"],
-  AssetSnapshots: ["id", "assetAccountId", "date", "value", "note"],
+  AssetAccounts: ["id", "name", "type", "memberId", "currency"],
+  AssetSnapshots: ["id", "assetAccountId", "date", "value", "note", "costBasis", "fxRate"],
 };
 
 // ---- 初期データ（今アプリで使っているサンプルと同じ内容） -------------------
@@ -72,33 +73,34 @@ const SEED_DATA = {
     ["e8", "こども 授業参観", "2026-08-20", "13:00", "2026-08-20", "14:00", "m3", "none", ""],
   ],
   AssetAccounts: [
-    ["a1", "普通預金（三井住友）", "bank", "m1"],
-    ["a2", "定期預金", "bank", "m1"],
-    ["a3", "現金（財布）", "cash", "m2"],
-    ["a4", "つみたてNISA（eMAXIS Slim）", "investment", "m1"],
-    ["a5", "特定口座（個別株）", "investment", "m2"],
+    ["a1", "普通預金（三井住友）", "bank", "m1", ""],
+    ["a2", "定期預金", "bank", "m1", ""],
+    ["a3", "現金（財布）", "cash", "m2", ""],
+    ["a4", "つみたてNISA（eMAXIS Slim）", "investment", "m1", ""],
+    ["a5", "特定口座（米国株）", "investment", "m2", "USD"],
   ],
+  // 列: id, assetAccountId, date, value, note, costBasis（元本・任意）, fxRate（為替レート・外貨口座のみ）
   AssetSnapshots: [
-    ["s1", "a1", "2026-05-31", 1200000, ""],
-    ["s2", "a1", "2026-06-30", 1350000, ""],
-    ["s3", "a1", "2026-07-31", 1280000, ""],
-    ["s4", "a1", "2026-08-05", 1420000, ""],
-    ["s5", "a2", "2026-05-31", 2000000, ""],
-    ["s6", "a2", "2026-06-30", 2000000, ""],
-    ["s7", "a2", "2026-07-31", 2000000, ""],
-    ["s8", "a2", "2026-08-05", 2005000, ""],
-    ["s9", "a3", "2026-05-31", 45000, ""],
-    ["s10", "a3", "2026-06-30", 38000, ""],
-    ["s11", "a3", "2026-07-31", 52000, ""],
-    ["s12", "a3", "2026-08-05", 41000, ""],
-    ["s13", "a4", "2026-05-31", 850000, ""],
-    ["s14", "a4", "2026-06-30", 910000, ""],
-    ["s15", "a4", "2026-07-31", 890000, ""],
-    ["s16", "a4", "2026-08-05", 965000, ""],
-    ["s17", "a5", "2026-05-31", 620000, ""],
-    ["s18", "a5", "2026-06-30", 680000, ""],
-    ["s19", "a5", "2026-07-31", 705000, ""],
-    ["s20", "a5", "2026-08-05", 742000, ""],
+    ["s1", "a1", "2026-05-31", 1200000, "", "", ""],
+    ["s2", "a1", "2026-06-30", 1350000, "", "", ""],
+    ["s3", "a1", "2026-07-31", 1280000, "", "", ""],
+    ["s4", "a1", "2026-08-05", 1420000, "", "", ""],
+    ["s5", "a2", "2026-05-31", 2000000, "", "", ""],
+    ["s6", "a2", "2026-06-30", 2000000, "", "", ""],
+    ["s7", "a2", "2026-07-31", 2000000, "", "", ""],
+    ["s8", "a2", "2026-08-05", 2005000, "", "", ""],
+    ["s9", "a3", "2026-05-31", 45000, "", "", ""],
+    ["s10", "a3", "2026-06-30", 38000, "", "", ""],
+    ["s11", "a3", "2026-07-31", 52000, "", "", ""],
+    ["s12", "a3", "2026-08-05", 41000, "", "", ""],
+    ["s13", "a4", "2026-05-31", 850000, "", 800000, ""],
+    ["s14", "a4", "2026-06-30", 910000, "", 850000, ""],
+    ["s15", "a4", "2026-07-31", 890000, "", 850000, ""],
+    ["s16", "a4", "2026-08-05", 965000, "", 900000, ""],
+    ["s17", "a5", "2026-05-31", 4200, "", 4000, 148.5],
+    ["s18", "a5", "2026-06-30", 4350, "", 4000, 149.2],
+    ["s19", "a5", "2026-07-31", 4500, "", 4000, 150.1],
+    ["s20", "a5", "2026-08-05", 4600, "", 4200, 151.0],
   ],
 };
 
@@ -140,6 +142,19 @@ function setupDatabase() {
 }
 
 /**
+ * マイグレーション共通ヘルパー: シートに columnName 列が無ければ末尾に追加する。
+ * 既にある場合は何もしない（戻り値 false）ので、複数回実行しても安全。
+ */
+function addColumnIfMissing_(sheet, columnName) {
+  const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+  if (headers.indexOf(columnName) !== -1) return false;
+  const col = headers.length + 1;
+  sheet.insertColumnAfter(headers.length);
+  sheet.getRange(1, col).setValue(columnName);
+  return true;
+}
+
+/**
  * 既存のスプレッドシート用マイグレーション:
  * 以前のバージョンで作成した Transactions シートには memberId 列が無く、
  * 家計簿の記録者（メンバー）が保存されずに欠落していた。この関数を1回だけ
@@ -153,16 +168,35 @@ function migrateAddMemberIdToTransactions() {
     Logger.log("Transactions シートが見つかりません。");
     return;
   }
-  const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
-  if (headers.indexOf("memberId") !== -1) {
-    Logger.log("memberId 列は既に存在します。何もしませんでした。");
+  const added = addColumnIfMissing_(sheet, "memberId");
+  Logger.log(added ? "memberId 列を追加しました。" : "memberId 列は既に存在します。何もしませんでした。");
+}
+
+/**
+ * 既存のスプレッドシート用マイグレーション:
+ * 投資口座の含み損益（元本との差分）・外貨建て資産に対応するため、
+ * AssetAccounts に通貨(currency)列、AssetSnapshots に元本(costBasis)・
+ * 為替レート(fxRate)列を追加する。どちらもすべて空欄のまま追加され、
+ * 既存データはこれまで通り円建て・元本未記録として扱われる
+ * （空欄なら含み損益・外貨換算の表示は出ない）。
+ * 既に列がある場合は何もしない（複数回実行しても安全）。
+ */
+function migrateAddInvestmentColumns() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const accounts = ss.getSheetByName("AssetAccounts");
+  const snapshots = ss.getSheetByName("AssetSnapshots");
+  if (!accounts || !snapshots) {
+    Logger.log("AssetAccounts または AssetSnapshots シートが見つかりません。");
     return;
   }
-  const memoIndex = headers.indexOf("memo"); // 0始まり
-  const insertBeforeCol = memoIndex === -1 ? headers.length + 1 : memoIndex + 1; // 1始まり
-  sheet.insertColumnBefore(insertBeforeCol);
-  sheet.getRange(1, insertBeforeCol).setValue("memberId");
-  Logger.log("memberId 列を追加しました。");
+  const addedCurrency = addColumnIfMissing_(accounts, "currency");
+  const addedCostBasis = addColumnIfMissing_(snapshots, "costBasis");
+  const addedFxRate = addColumnIfMissing_(snapshots, "fxRate");
+  Logger.log(
+    "currency: " + (addedCurrency ? "追加しました" : "既に存在") +
+    " / costBasis: " + (addedCostBasis ? "追加しました" : "既に存在") +
+    " / fxRate: " + (addedFxRate ? "追加しました" : "既に存在")
+  );
 }
 
 // ---- ここから下は Web アプリとしてデプロイした場合に使う簡易API -------------

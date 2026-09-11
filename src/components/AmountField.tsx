@@ -34,7 +34,22 @@ export function AmountField({
       inputMode="numeric"
       value={display}
       placeholder={placeholder}
-      onFocus={() => setFocused(true)}
+      onFocus={(e) => {
+        setFocused(true);
+        // 既存の金額を編集するとき、選択済み状態にしておくことで
+        // そのまま数字を打ち始めれば置き換わる（末尾に連結されない）ようにする。
+        // setFocused(true) の再レンダリングでカンマ区切り表示→生の数字表示に
+        // 切り替わった後でないと選択範囲がリセットされてしまうため、
+        // 描画が反映される次フレームまで待ってから選択する。
+        // select() はDOM上フォーカスを伴うため、待っている間にユーザーが
+        // 別の欄へ移動していた場合はフォーカスを奪い返してしまう
+        // （後続の入力がこのフィールドに誤って書き込まれる）。まだこの欄に
+        // フォーカスが残っている場合だけ選択する。
+        const input = e.target;
+        requestAnimationFrame(() => {
+          if (document.activeElement === input) input.select();
+        });
+      }}
       onBlur={() => setFocused(false)}
       onChange={(e) => onChange(e.target.value.replace(/[^0-9]/g, ""))}
       className={`text-numeral mt-1 w-full rounded-xl border bg-surface px-4 py-4 text-[22px] font-semibold text-foreground outline-none transition-colors focus:ring-2 ${

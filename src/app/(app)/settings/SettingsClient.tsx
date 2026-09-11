@@ -7,7 +7,9 @@ import {
   type Member,
   type Category,
   type AssetAccount,
+  type CurrencyCode,
   ASSET_TYPE_LABEL,
+  CURRENCY_LABEL,
 } from "@/lib/types";
 import {
   addMember as addMemberAction,
@@ -23,7 +25,7 @@ import { Collapsible } from "@/components/Collapsible";
 import { useToast } from "@/components/Toast";
 import { useConfirm } from "@/components/ConfirmDialog";
 import { fieldClass, FieldError } from "@/components/form";
-import { IconButton, TrashIcon } from "@/components/icons";
+import { IconButton, SpinnerIcon, TrashIcon } from "@/components/icons";
 import { generateId } from "@/lib/id";
 import { describeError } from "@/lib/errors";
 
@@ -50,6 +52,7 @@ const COLOR_OPTIONS = [
 ];
 
 const ASSET_TYPES: AssetAccount["type"][] = ["bank", "cash", "investment"];
+const CURRENCIES: CurrencyCode[] = ["JPY", "USD", "EUR"];
 
 export default function SettingsClient({
   initialMembers,
@@ -86,7 +89,12 @@ export default function SettingsClient({
   const [accountName, setAccountName] = useState("");
   const [accountType, setAccountType] = useState<AssetAccount["type"]>("bank");
   const [accountMemberId, setAccountMemberId] = useState("");
+  const [accountCurrency, setAccountCurrency] = useState<CurrencyCode>("JPY");
   const [accountNameError, setAccountNameError] = useState<string | null>(null);
+
+  const [memberSaving, setMemberSaving] = useState(false);
+  const [categorySaving, setCategorySaving] = useState(false);
+  const [accountSaving, setAccountSaving] = useState(false);
 
   async function addMember(e: React.FormEvent) {
     e.preventDefault();
@@ -98,6 +106,7 @@ export default function SettingsClient({
     const newMember: Member = { id: generateId("m"), name: memberName.trim(), color: memberColor };
     setMembers((prev) => [...prev, newMember]);
     setMemberName("");
+    setMemberSaving(true);
     try {
       await addMemberAction(newMember);
       showToast("メンバーを追加しました");
@@ -105,6 +114,7 @@ export default function SettingsClient({
       setMembers((prev) => prev.filter((m) => m.id !== newMember.id));
       showToast(describeError(err, "追加に失敗しました"), { variant: "error" });
     }
+    setMemberSaving(false);
   }
 
   async function removeMember(target: Member) {
@@ -151,6 +161,7 @@ export default function SettingsClient({
     };
     setCategories((prev) => [...prev, newCategory]);
     setCategoryName("");
+    setCategorySaving(true);
     try {
       await addCategoryAction(newCategory);
       showToast("カテゴリを追加しました");
@@ -158,6 +169,7 @@ export default function SettingsClient({
       setCategories((prev) => prev.filter((c) => c.id !== newCategory.id));
       showToast(describeError(err, "追加に失敗しました"), { variant: "error" });
     }
+    setCategorySaving(false);
   }
 
   async function removeCategory(target: Category) {
@@ -201,9 +213,11 @@ export default function SettingsClient({
       name: accountName.trim(),
       type: accountType,
       memberId: accountMemberId || undefined,
+      currency: accountCurrency === "JPY" ? undefined : accountCurrency,
     };
     setAssetAccounts((prev) => [...prev, newAccount]);
     setAccountName("");
+    setAccountSaving(true);
     try {
       await addAssetAccountAction(newAccount);
       showToast("資産口座を追加しました");
@@ -211,6 +225,7 @@ export default function SettingsClient({
       setAssetAccounts((prev) => prev.filter((a) => a.id !== newAccount.id));
       showToast(describeError(err, "追加に失敗しました"), { variant: "error" });
     }
+    setAccountSaving(false);
   }
 
   async function removeAssetAccount(target: AssetAccount) {
@@ -330,8 +345,10 @@ export default function SettingsClient({
             </div>
             <button
               type="submit"
-              className="w-full rounded-full bg-brand py-2.5 text-[15px] font-semibold text-white shadow-sm shadow-brand/30 transition-transform active:scale-[0.98]"
+              disabled={memberSaving}
+              className="flex w-full items-center justify-center gap-2 rounded-full bg-brand py-2.5 text-[15px] font-semibold text-white shadow-sm shadow-brand/30 transition-transform active:scale-[0.98] disabled:opacity-60"
             >
+              {memberSaving && <SpinnerIcon />}
               追加
             </button>
           </form>
@@ -428,8 +445,10 @@ export default function SettingsClient({
             </div>
             <button
               type="submit"
-              className="w-full rounded-full bg-brand py-2.5 text-[15px] font-semibold text-white shadow-sm shadow-brand/30 transition-transform active:scale-[0.98]"
+              disabled={categorySaving}
+              className="flex w-full items-center justify-center gap-2 rounded-full bg-brand py-2.5 text-[15px] font-semibold text-white shadow-sm shadow-brand/30 transition-transform active:scale-[0.98] disabled:opacity-60"
             >
+              {categorySaving && <SpinnerIcon />}
               追加
             </button>
           </form>
@@ -458,7 +477,10 @@ export default function SettingsClient({
                 <div key={a.id} className="flex items-center gap-3 p-3.5">
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-[15px] font-medium text-foreground">{a.name}</p>
-                    <p className="text-[12px] text-muted">{ASSET_TYPE_LABEL[a.type]}</p>
+                    <p className="text-[12px] text-muted">
+                      {ASSET_TYPE_LABEL[a.type]}
+                      {a.currency && a.currency !== "JPY" ? ` ・ ${a.currency}` : ""}
+                    </p>
                   </div>
                   <IconButton label="削除" variant="danger" onClick={() => removeAssetAccount(a)}>
                     <TrashIcon />
@@ -513,10 +535,26 @@ export default function SettingsClient({
                 ))}
               </select>
             </label>
+            <label className="mb-3 block text-[12px] text-muted">
+              通貨
+              <select
+                value={accountCurrency}
+                onChange={(e) => setAccountCurrency(e.target.value as CurrencyCode)}
+                className="mt-1 w-full rounded-xl border border-line bg-surface px-3.5 py-2.5 text-[16px] text-foreground focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
+              >
+                {CURRENCIES.map((c) => (
+                  <option key={c} value={c}>
+                    {CURRENCY_LABEL[c]}（{c}）
+                  </option>
+                ))}
+              </select>
+            </label>
             <button
               type="submit"
-              className="w-full rounded-full bg-brand py-2.5 text-[15px] font-semibold text-white shadow-sm shadow-brand/30 transition-transform active:scale-[0.98]"
+              disabled={accountSaving}
+              className="flex w-full items-center justify-center gap-2 rounded-full bg-brand py-2.5 text-[15px] font-semibold text-white shadow-sm shadow-brand/30 transition-transform active:scale-[0.98] disabled:opacity-60"
             >
+              {accountSaving && <SpinnerIcon />}
               追加
             </button>
           </form>

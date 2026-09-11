@@ -21,6 +21,23 @@ export function TrashIcon({ className = "h-4 w-4" }: { className?: string }) {
   );
 }
 
+// 保存中であることを示すスピナー。GASの応答は数秒かかることがあり、
+// ボタンのラベルが「保存中…」に変わるだけでは進行中かどうか気づきにくいため、
+// アニメーションで動いていることを視覚的に伝える。
+export function SpinnerIcon({ className = "h-4 w-4" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={`animate-spin ${className}`}>
+      <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2.5" opacity="0.25" />
+      <path
+        d="M21 12a9 9 0 0 0-9-9"
+        stroke="currentColor"
+        strokeWidth="2.5"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
 export function IconButton({
   onClick,
   label,

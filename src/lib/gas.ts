@@ -87,6 +87,14 @@ function emptyToUndefined(value: string | undefined | null): string | undefined 
   return value ? value : undefined;
 }
 
+// スプレッドシートの空セルは "" (空文字列) として返ってくるため、
+// 数値フィールド（costBasis/fxRate等）はこれを undefined に正規化する。
+// 値が入っている場合はGAS側で数値セルとして書き込んでいるので既に number 型。
+function emptyToUndefinedNumber(value: number | string | undefined | null): number | undefined {
+  if (value === "" || value === undefined || value === null) return undefined;
+  return typeof value === "number" ? value : Number(value);
+}
+
 export async function getMembers(): Promise<Member[]> {
   return gasGet<Member>("Members");
 }
@@ -116,12 +124,21 @@ export async function getEvents(): Promise<ScheduleEvent[]> {
 
 export async function getAssetAccounts(): Promise<AssetAccount[]> {
   const rows = await gasGet<AssetAccount>("AssetAccounts");
-  return rows.map((r) => ({ ...r, memberId: emptyToUndefined(r.memberId) }));
+  return rows.map((r) => ({
+    ...r,
+    memberId: emptyToUndefined(r.memberId),
+    currency: emptyToUndefined(r.currency as unknown as string) as AssetAccount["currency"],
+  }));
 }
 
 export async function getAssetSnapshots(): Promise<AssetSnapshot[]> {
   const rows = await gasGet<AssetSnapshot>("AssetSnapshots");
-  return rows.map((r) => ({ ...r, note: emptyToUndefined(r.note) }));
+  return rows.map((r) => ({
+    ...r,
+    note: emptyToUndefined(r.note),
+    costBasis: emptyToUndefinedNumber(r.costBasis),
+    fxRate: emptyToUndefinedNumber(r.fxRate),
+  }));
 }
 
 export async function createRow(

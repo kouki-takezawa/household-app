@@ -6,6 +6,7 @@ import type {
   AssetAccount,
   AssetSnapshot,
   Category,
+  CurrencyCode,
   Member,
   ScheduleEvent,
   Transaction,
@@ -129,11 +130,12 @@ export type SearchResults = {
     id: string;
     accountId: string;
     accountName: string;
+    currency?: CurrencyCode;
     date: string;
     value: number;
     note?: string;
   }[];
-  /** 各カテゴリの一致件数（表示件数を8件に絞る前の総数）。「他◯件」の表示に使う。 */
+  /** 各カテゴリの一致件数（表示件数を limit 件に絞る前の総数）。「他◯件」の表示に使う。 */
   totalCounts: {
     transactions: number;
     events: number;
@@ -141,7 +143,8 @@ export type SearchResults = {
   };
 };
 
-export async function searchAll(query: string): Promise<SearchResults> {
+/** limit未指定時は8件（ヘッダーのプレビュー用）。/search の全件表示では大きい値を渡す。 */
+export async function searchAll(query: string, limit = 8): Promise<SearchResults> {
   const q = query.trim().toLowerCase();
   if (!q) {
     return { transactions: [], events: [], snapshots: [], totalCounts: { transactions: 0, events: 0, snapshots: 0 } };
@@ -158,7 +161,8 @@ export async function searchAll(query: string): Promise<SearchResults> {
 
   const categoryName = (id: string) => categories.find((c) => c.id === id)?.name ?? "その他";
   const memberName = (id?: string) => members.find((m) => m.id === id)?.name;
-  const accountName = (id: string) => accounts.find((a) => a.id === id)?.name ?? "不明な口座";
+  const accountById = (id: string) => accounts.find((a) => a.id === id);
+  const accountName = (id: string) => accountById(id)?.name ?? "不明な口座";
 
   const allMatchedTransactions = transactions
     .filter(
@@ -182,7 +186,7 @@ export async function searchAll(query: string): Promise<SearchResults> {
     )
     .sort((a, b) => b.date.localeCompare(a.date));
 
-  const matchedTransactions = allMatchedTransactions.slice(0, 8).map((t) => ({
+  const matchedTransactions = allMatchedTransactions.slice(0, limit).map((t) => ({
     id: t.id,
     date: t.date,
     amount: t.amount,
@@ -191,17 +195,18 @@ export async function searchAll(query: string): Promise<SearchResults> {
     memo: t.memo,
   }));
 
-  const matchedEvents = allMatchedEvents.slice(0, 8).map((e) => ({
+  const matchedEvents = allMatchedEvents.slice(0, limit).map((e) => ({
     id: e.id,
     title: e.title,
     startDate: e.startDate,
     memberName: memberName(e.memberId),
   }));
 
-  const matchedSnapshots = allMatchedSnapshots.slice(0, 8).map((s) => ({
+  const matchedSnapshots = allMatchedSnapshots.slice(0, limit).map((s) => ({
     id: s.id,
     accountId: s.assetAccountId,
     accountName: accountName(s.assetAccountId),
+    currency: accountById(s.assetAccountId)?.currency,
     date: s.date,
     value: s.value,
     note: s.note,

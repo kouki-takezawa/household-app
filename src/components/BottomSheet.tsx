@@ -1,5 +1,7 @@
 "use client";
 
+import { SpinnerIcon } from "./icons";
+
 // スマホでは画面下からせり上がる「ボトムシート」、sm 以上では中央に浮くダイアログとして表示する
 // 共通コンテナ。以前は AccountDetailClient / BudgetClient / ScheduleClient がそれぞれ同じ見た目の
 // フォームラッパーをベタ書きしていたため、1箇所に集約して見た目のズレが起きないようにする。
@@ -51,7 +53,8 @@ export function SheetActions({
       <button
         type="button"
         onClick={onCancel}
-        className="btn-lg flex-1 border border-line text-subtle active:opacity-70"
+        disabled={saving}
+        className="btn-lg flex-1 border border-line text-subtle active:opacity-70 disabled:opacity-40"
       >
         キャンセル
       </button>
@@ -60,7 +63,14 @@ export function SheetActions({
         disabled={saving}
         className="btn-lg flex-1 bg-brand text-white shadow-sm shadow-brand/30 active:scale-[0.98] disabled:opacity-60"
       >
-        {saving ? savingLabel : submitLabel}
+        {saving ? (
+          <span className="flex items-center justify-center gap-2">
+            <SpinnerIcon />
+            {savingLabel}
+          </span>
+        ) : (
+          submitLabel
+        )}
       </button>
     </div>
   );
