@@ -34,6 +34,7 @@ import { MemberFilterChips } from "@/components/MemberFilterChips";
 import { useToast } from "@/components/Toast";
 import { fieldClass, FieldError } from "@/components/form";
 import { generateId } from "@/lib/id";
+import { describeError } from "@/lib/errors";
 
 const WEEKDAYS = ["日", "月", "火", "水", "木", "金", "土"];
 
@@ -142,9 +143,9 @@ export default function ScheduleClient({
       await addEvent(newEvent);
       showToast("予定を追加しました");
       setShowForm(false);
-    } catch {
+    } catch (err) {
       setEvents((prev) => prev.filter((ev) => ev.id !== newEvent.id));
-      showToast("追加に失敗しました。もう一度お試しください", { variant: "error" });
+      showToast(describeError(err, "追加に失敗しました"), { variant: "error" });
     }
     setSaving(false);
   }

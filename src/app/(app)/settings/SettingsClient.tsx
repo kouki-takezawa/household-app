@@ -25,6 +25,7 @@ import { useConfirm } from "@/components/ConfirmDialog";
 import { fieldClass, FieldError } from "@/components/form";
 import { IconButton, TrashIcon } from "@/components/icons";
 import { generateId } from "@/lib/id";
+import { describeError } from "@/lib/errors";
 
 const PLUS_ICON = (
   <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4">
@@ -100,9 +101,9 @@ export default function SettingsClient({
     try {
       await addMemberAction(newMember);
       showToast("メンバーを追加しました");
-    } catch {
+    } catch (err) {
       setMembers((prev) => prev.filter((m) => m.id !== newMember.id));
-      showToast("追加に失敗しました。もう一度お試しください", { variant: "error" });
+      showToast(describeError(err, "追加に失敗しました"), { variant: "error" });
     }
   }
 
@@ -123,15 +124,15 @@ export default function SettingsClient({
           setMembers((prev) => [...prev, target]);
           try {
             await addMemberAction(target);
-          } catch {
+          } catch (err) {
             setMembers((prev) => prev.filter((m) => m.id !== target.id));
-            showToast("元に戻せませんでした", { variant: "error" });
+            showToast(describeError(err, "元に戻せませんでした"), { variant: "error" });
           }
         },
       });
-    } catch {
+    } catch (err) {
       setMembers((prev) => [...prev, target]);
-      showToast("削除に失敗しました。もう一度お試しください", { variant: "error" });
+      showToast(describeError(err, "削除に失敗しました"), { variant: "error" });
     }
   }
 
@@ -153,9 +154,9 @@ export default function SettingsClient({
     try {
       await addCategoryAction(newCategory);
       showToast("カテゴリを追加しました");
-    } catch {
+    } catch (err) {
       setCategories((prev) => prev.filter((c) => c.id !== newCategory.id));
-      showToast("追加に失敗しました。もう一度お試しください", { variant: "error" });
+      showToast(describeError(err, "追加に失敗しました"), { variant: "error" });
     }
   }
 
@@ -176,15 +177,15 @@ export default function SettingsClient({
           setCategories((prev) => [...prev, target]);
           try {
             await addCategoryAction(target);
-          } catch {
+          } catch (err) {
             setCategories((prev) => prev.filter((c) => c.id !== target.id));
-            showToast("元に戻せませんでした", { variant: "error" });
+            showToast(describeError(err, "元に戻せませんでした"), { variant: "error" });
           }
         },
       });
-    } catch {
+    } catch (err) {
       setCategories((prev) => [...prev, target]);
-      showToast("削除に失敗しました。もう一度お試しください", { variant: "error" });
+      showToast(describeError(err, "削除に失敗しました"), { variant: "error" });
     }
   }
 
@@ -206,9 +207,9 @@ export default function SettingsClient({
     try {
       await addAssetAccountAction(newAccount);
       showToast("資産口座を追加しました");
-    } catch {
+    } catch (err) {
       setAssetAccounts((prev) => prev.filter((a) => a.id !== newAccount.id));
-      showToast("追加に失敗しました。もう一度お試しください", { variant: "error" });
+      showToast(describeError(err, "追加に失敗しました"), { variant: "error" });
     }
   }
 
@@ -229,15 +230,15 @@ export default function SettingsClient({
           setAssetAccounts((prev) => [...prev, target]);
           try {
             await addAssetAccountAction(target);
-          } catch {
+          } catch (err) {
             setAssetAccounts((prev) => prev.filter((a) => a.id !== target.id));
-            showToast("元に戻せませんでした", { variant: "error" });
+            showToast(describeError(err, "元に戻せませんでした"), { variant: "error" });
           }
         },
       });
-    } catch {
+    } catch (err) {
       setAssetAccounts((prev) => [...prev, target]);
-      showToast("削除に失敗しました。もう一度お試しください", { variant: "error" });
+      showToast(describeError(err, "削除に失敗しました"), { variant: "error" });
     }
   }
 

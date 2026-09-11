@@ -21,32 +21,66 @@ type SheetName =
 function requireUrl(): string {
   if (!GAS_URL) {
     throw new Error(
-      "GAS_API_URL が設定されていません。.env.local を確認してください。"
+      "GAS_API_URL が設定されていません。.env.local（本番はVercelの環境変数）を確認してください。"
     );
   }
   return GAS_URL;
+}
+
+// GASはコールドスタート時に数秒〜十数秒かかることがあるため、Vercelの
+// サーバーアクションのタイムアウトより先にこちら側で打ち切り、原因を
+// 「タイムアウト」だと特定できるようにする。
+const GAS_TIMEOUT_MS = 25_000;
+
+async function gasFetch(url: string, init?: RequestInit): Promise<Response> {
+  try {
+    return await fetch(url, { ...init, signal: AbortSignal.timeout(GAS_TIMEOUT_MS) });
+  } catch (err) {
+    if (err instanceof Error && err.name === "TimeoutError") {
+      throw new Error(
+        "GASサーバーからの応答がタイムアウトしました。GASのWebアプリが正しくデプロイされているか確認してください。"
+      );
+    }
+    const detail = err instanceof Error ? err.message : String(err);
+    throw new Error(
+      `GASサーバーに接続できませんでした（${detail}）。GAS_API_URLの値とGASのデプロイ状態を確認してください。`
+    );
+  }
 }
 
 // GASの応答は遅い（数秒）ため、短時間キャッシュして画面遷移を高速化する。
 // 追加・編集・削除のたびに actions.ts の revalidatePath が全ページのキャッシュを
 // 破棄するので、データが古いまま表示され続けることはない。
 async function gasGet<T>(sheet: SheetName): Promise<T[]> {
-  const res = await fetch(`${requireUrl()}?sheet=${sheet}`, {
+  const res = await gasFetch(`${requireUrl()}?sheet=${sheet}`, {
     next: { revalidate: 30 },
   });
-  if (!res.ok) throw new Error(`GAS GET ${sheet} failed: ${res.status}`);
+  if (!res.ok) {
+    throw new Error(`GASサーバーがエラーを返しました（GET ${sheet}: ${res.status}）。`);
+  }
   return res.json();
 }
 
 async function gasPost(body: Record<string, unknown>): Promise<void> {
-  const res = await fetch(requireUrl(), {
+  const res = await gasFetch(requireUrl(), {
     method: "POST",
     headers: { "Content-Type": "text/plain;charset=utf-8" },
     body: JSON.stringify(body),
   });
-  if (!res.ok) throw new Error(`GAS POST failed: ${res.status}`);
-  const json = await res.json();
-  if (json?.error) throw new Error(String(json.error));
+  if (!res.ok) {
+    throw new Error(`GASサーバーがエラーを返しました（POST: ${res.status}）。`);
+  }
+  let json: { error?: unknown } | null = null;
+  try {
+    json = await res.json();
+  } catch {
+    // GASのWebアプリ権限が「全員」になっていない等の理由でJSONの代わりに
+    // Googleのログイン/権限エラーページ（HTML）が返ってくるケースがある。
+    throw new Error(
+      "GASサーバーの応答を解析できませんでした。GASのデプロイ設定（アクセスできるユーザー）を確認してください。"
+    );
+  }
+  if (json?.error) throw new Error(`GASサーバーエラー: ${String(json.error)}`);
 }
 
 function emptyToUndefined(value: string | undefined | null): string | undefined {

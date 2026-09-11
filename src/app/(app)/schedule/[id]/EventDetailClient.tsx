@@ -14,6 +14,7 @@ import { SlidePage } from "@/components/SlidePage";
 import { useToast } from "@/components/Toast";
 import { useConfirm } from "@/components/ConfirmDialog";
 import { fieldClass, FieldError } from "@/components/form";
+import { describeError } from "@/lib/errors";
 
 const RECURRENCE_LABEL: Record<NonNullable<ScheduleEvent["recurrence"]>, string> = {
   none: "なし",
@@ -69,8 +70,8 @@ export default function EventDetailClient({
       });
       showToast("更新しました");
       router.push("/schedule");
-    } catch {
-      showToast("更新に失敗しました。もう一度お試しください", { variant: "error" });
+    } catch (err) {
+      showToast(describeError(err, "更新に失敗しました"), { variant: "error" });
     } finally {
       setSaving(false);
     }
@@ -87,14 +88,14 @@ export default function EventDetailClient({
         onAction: async () => {
           try {
             await addEvent(event);
-          } catch {
-            showToast("元に戻せませんでした", { variant: "error" });
+          } catch (err) {
+            showToast(describeError(err, "元に戻せませんでした"), { variant: "error" });
           }
         },
       });
       router.push("/schedule");
-    } catch {
-      showToast("削除に失敗しました。もう一度お試しください", { variant: "error" });
+    } catch (err) {
+      showToast(describeError(err, "削除に失敗しました"), { variant: "error" });
     }
   }
 

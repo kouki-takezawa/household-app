@@ -28,6 +28,7 @@ import { IconButton, PencilIcon, TrashIcon } from "@/components/icons";
 import { useToast } from "@/components/Toast";
 import { useConfirm } from "@/components/ConfirmDialog";
 import { FieldError } from "@/components/form";
+import { describeError } from "@/lib/errors";
 import { chartTooltipStyle } from "@/lib/chartTheme";
 import { generateId } from "@/lib/id";
 
@@ -97,15 +98,15 @@ export default function AccountDetailClient({
           setSnapshots((prev) => [...prev, target]);
           try {
             await addAssetSnapshot(target);
-          } catch {
+          } catch (err) {
             setSnapshots((prev) => prev.filter((s) => s.id !== target.id));
-            showToast("元に戻せませんでした", { variant: "error" });
+            showToast(describeError(err, "元に戻せませんでした"), { variant: "error" });
           }
         },
       });
-    } catch {
+    } catch (err) {
       setSnapshots((prev) => [...prev, target]);
-      showToast("削除に失敗しました。もう一度お試しください", { variant: "error" });
+      showToast(describeError(err, "削除に失敗しました"), { variant: "error" });
     }
   }
 
@@ -133,11 +134,11 @@ export default function AccountDetailClient({
         await editAssetSnapshot(editingId, updated);
         showToast("更新しました");
         setShowForm(false);
-      } catch {
+      } catch (err) {
         if (previous) {
           setSnapshots((prev) => prev.map((s) => (s.id === editingId ? previous : s)));
         }
-        showToast("更新に失敗しました。もう一度お試しください", { variant: "error" });
+        showToast(describeError(err, "更新に失敗しました"), { variant: "error" });
       }
     } else {
       const newSnapshot: AssetSnapshot = {
@@ -152,9 +153,9 @@ export default function AccountDetailClient({
         await addAssetSnapshot(newSnapshot);
         showToast("記録しました");
         setShowForm(false);
-      } catch {
+      } catch (err) {
         setSnapshots((prev) => prev.filter((s) => s.id !== newSnapshot.id));
-        showToast("記録に失敗しました。もう一度お試しください", { variant: "error" });
+        showToast(describeError(err, "記録に失敗しました"), { variant: "error" });
       }
     }
     setSaving(false);

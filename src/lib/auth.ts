@@ -2,6 +2,11 @@ export const AUTH_COOKIE = "household_auth";
 export const ATTEMPT_COOKIE = "household_login_attempts";
 export const MAX_LOGIN_ATTEMPTS = 5;
 export const LOCKOUT_SECONDS = 60;
+// 記録フォームの入力中（日付・金額・カテゴリ・メンバー・メモの入力）に
+// セッションが切れて保存が失敗することがあったため、実際の入力に十分な
+// 余裕を持たせている。proxy.ts がリクエストのたびにこの秒数で有効期限を
+// 延長する（スライディングセッション）ため、操作を続けている限り切れない。
+export const SESSION_SECONDS = 60 * 30;
 
 async function sha256Hex(text: string): Promise<string> {
   const data = new TextEncoder().encode(text);

@@ -36,6 +36,7 @@ import { useConfirm } from "@/components/ConfirmDialog";
 import { fieldClass, FieldError } from "@/components/form";
 import { chartTooltipStyle, chartLegendStyle } from "@/lib/chartTheme";
 import { generateId } from "@/lib/id";
+import { describeError } from "@/lib/errors";
 
 function monthOptions(txs: Transaction[], defaultMonth: string): string[] {
   const set = new Set(txs.map((t) => t.date.slice(0, 7)));
@@ -212,15 +213,15 @@ export default function BudgetClient({
           setTransactions((prev) => [target, ...prev]);
           try {
             await addTransaction(target);
-          } catch {
+          } catch (err) {
             setTransactions((prev) => prev.filter((t) => t.id !== target.id));
-            showToast("元に戻せませんでした", { variant: "error" });
+            showToast(describeError(err, "元に戻せませんでした"), { variant: "error" });
           }
         },
       });
-    } catch {
+    } catch (err) {
       setTransactions((prev) => [target, ...prev]);
-      showToast("削除に失敗しました。もう一度お試しください", { variant: "error" });
+      showToast(describeError(err, "削除に失敗しました"), { variant: "error" });
     }
   }
 
@@ -250,11 +251,11 @@ export default function BudgetClient({
         await editTransaction(editingId, updated);
         showToast("更新しました");
         setShowForm(false);
-      } catch {
+      } catch (err) {
         if (previous) {
           setTransactions((prev) => prev.map((t) => (t.id === editingId ? previous : t)));
         }
-        showToast("更新に失敗しました。もう一度お試しください", { variant: "error" });
+        showToast(describeError(err, "更新に失敗しました"), { variant: "error" });
       }
     } else {
       const newTx: Transaction = {
@@ -271,9 +272,9 @@ export default function BudgetClient({
         await addTransaction(newTx);
         showToast("保存しました");
         setShowForm(false);
-      } catch {
+      } catch (err) {
         setTransactions((prev) => prev.filter((t) => t.id !== newTx.id));
-        showToast("保存に失敗しました。もう一度お試しください", { variant: "error" });
+        showToast(describeError(err, "保存に失敗しました"), { variant: "error" });
       }
     }
     setSaving(false);

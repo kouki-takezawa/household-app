@@ -14,13 +14,19 @@
  * 実行ユーザー: 自分、アクセスできるユーザー: 全員）すると、
  * doGet / doPost 経由でこのシートをそのままAPIとして使えるようにしてあります。
  * その場合は「ウェブアプリのURL」の方を渡してください（推奨）。
+ *
+ * 既にこのスクリプトで作成済みのスプレッドシートを使っている場合（アップデート時）:
+ * このファイルの内容を丸ごと貼り替えたあと、関数選択プルダウンで
+ * migrateAddMemberIdToTransactions を選んで1回だけ実行してください
+ * （Transactions シートに記録者(memberId)列を追加するマイグレーションです。
+ * 既に列がある場合は何もしないので、間違って複数回実行しても安全です）。
  */
 
 // ---- シート定義（列の並び = ヘッダー） ----------------------------------
 const SHEET_DEFS = {
   Members: ["id", "name", "color"],
   Categories: ["id", "name", "type", "color"],
-  Transactions: ["id", "date", "amount", "type", "categoryId", "memo"],
+  Transactions: ["id", "date", "amount", "type", "categoryId", "memberId", "memo"],
   Events: ["id", "title", "startDate", "startTime", "endDate", "endTime", "memberId", "recurrence", "memo"],
   AssetAccounts: ["id", "name", "type", "memberId"],
   AssetSnapshots: ["id", "assetAccountId", "date", "value", "note"],
@@ -45,15 +51,15 @@ const SEED_DATA = {
     ["c9", "その他収入", "income", "#84cc16"],
   ],
   Transactions: [
-    ["t1", "2026-08-01", 320000, "income", "c8", "給料"],
-    ["t2", "2026-08-01", 180000, "income", "c8", "給料"],
-    ["t3", "2026-08-02", 8500, "expense", "c1", "スーパー"],
-    ["t4", "2026-08-03", 12000, "expense", "c3", "家賃一部"],
-    ["t5", "2026-08-04", 4200, "expense", "c2", "電気代"],
-    ["t6", "2026-08-05", 5400, "expense", "c4", "携帯代"],
-    ["t7", "2026-08-05", 3200, "expense", "c6", "電車代"],
-    ["t8", "2026-08-06", 6800, "expense", "c7", "映画・外食"],
-    ["t9", "2026-08-06", 2100, "expense", "c5", "日用品購入"],
+    ["t1", "2026-08-01", 320000, "income", "c8", "m1", "給料"],
+    ["t2", "2026-08-01", 180000, "income", "c8", "m2", "給料"],
+    ["t3", "2026-08-02", 8500, "expense", "c1", "m2", "スーパー"],
+    ["t4", "2026-08-03", 12000, "expense", "c3", "m1", "家賃一部"],
+    ["t5", "2026-08-04", 4200, "expense", "c2", "m1", "電気代"],
+    ["t6", "2026-08-05", 5400, "expense", "c4", "m1", "携帯代"],
+    ["t7", "2026-08-05", 3200, "expense", "c6", "m2", "電車代"],
+    ["t8", "2026-08-06", 6800, "expense", "c7", "m1", "映画・外食"],
+    ["t9", "2026-08-06", 2100, "expense", "c5", "m2", "日用品購入"],
   ],
   Events: [
     ["e1", "家族会議", "2026-08-06", "20:00", "2026-08-06", "21:00", "m1", "none", ""],
@@ -131,6 +137,32 @@ function setupDatabase() {
   Logger.log("=====================================");
   console.log("Database created:", url);
   return url;
+}
+
+/**
+ * 既存のスプレッドシート用マイグレーション:
+ * 以前のバージョンで作成した Transactions シートには memberId 列が無く、
+ * 家計簿の記録者（メンバー）が保存されずに欠落していた。この関数を1回だけ
+ * 実行すると、Transactions シートに memberId 列（無ければ）を追加する。
+ * 既に列がある場合は何もしない（複数回実行しても安全）。
+ */
+function migrateAddMemberIdToTransactions() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = ss.getSheetByName("Transactions");
+  if (!sheet) {
+    Logger.log("Transactions シートが見つかりません。");
+    return;
+  }
+  const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+  if (headers.indexOf("memberId") !== -1) {
+    Logger.log("memberId 列は既に存在します。何もしませんでした。");
+    return;
+  }
+  const memoIndex = headers.indexOf("memo"); // 0始まり
+  const insertBeforeCol = memoIndex === -1 ? headers.length + 1 : memoIndex + 1; // 1始まり
+  sheet.insertColumnBefore(insertBeforeCol);
+  sheet.getRange(1, insertBeforeCol).setValue("memberId");
+  Logger.log("memberId 列を追加しました。");
 }
 
 // ---- ここから下は Web アプリとしてデプロイした場合に使う簡易API -------------

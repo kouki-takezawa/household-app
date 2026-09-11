@@ -6,6 +6,7 @@ import {
   AUTH_COOKIE,
   LOCKOUT_SECONDS,
   MAX_LOGIN_ATTEMPTS,
+  SESSION_SECONDS,
   authToken,
   checkPasscode,
 } from "./auth";
@@ -70,9 +71,10 @@ export async function login(passcode: string): Promise<LoginResult> {
     httpOnly: true,
     sameSite: "lax",
     secure,
-    // ログイン状態を長く保持しない：離脱・再訪時には毎回ログインを求めるが、
-    // フォーム入力中に途中で切れて保存に失敗しないよう、操作に十分な猶予を持たせる。
-    maxAge: 90,
+    // ログイン状態を長く保持しない：離脱・再訪時には毎回ログインを求める。
+    // 秒数自体は SESSION_SECONDS を参照（proxy.ts がアクセスのたびに
+    // 延長するため、操作を続けている間は途中で切れない）。
+    maxAge: SESSION_SECONDS,
     path: "/",
   });
   return { ok: true };
