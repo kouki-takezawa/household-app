@@ -30,6 +30,7 @@ import { useConfirm } from "@/components/ConfirmDialog";
 import { FieldError } from "@/components/form";
 import { describeError } from "@/lib/errors";
 import { chartTooltipStyle } from "@/lib/chartTheme";
+import { totalAssetsAsOf } from "@/lib/dashboard";
 import { generateId } from "@/lib/id";
 
 function emptyForm(today: string) {
@@ -63,13 +64,16 @@ export default function AccountDetailClient({
   );
   const latest = history[0];
 
-  const trend = useMemo(
-    () =>
-      [...snapshots]
-        .sort((a, b) => a.date.localeCompare(b.date))
-        .map((s) => ({ date: s.date.slice(5), 評価額: s.value })),
-    [snapshots]
-  );
+  // 記録した日そのものではなく、記録がある月ごとに区切って表示する
+  // （月末時点での評価額を1点として繋ぐ）。
+  const trend = useMemo(() => {
+    const monthSet = new Set(snapshots.map((s) => s.date.slice(0, 7)));
+    const months = [...monthSet].sort();
+    return months.map((month) => ({
+      date: month.slice(5) + "月",
+      評価額: totalAssetsAsOf([account], snapshots, `${month}-31`),
+    }));
+  }, [snapshots, account]);
 
   function openNewForm() {
     setEditingId(null);

@@ -26,6 +26,7 @@ import { ColorAvatar } from "@/components/ColorAvatar";
 import { EmptyState } from "@/components/EmptyState";
 import { Collapsible } from "@/components/Collapsible";
 import { chartTooltipStyle } from "@/lib/chartTheme";
+import { totalAssetsAsOf } from "@/lib/dashboard";
 
 function latestSnapshot(snapshots: AssetSnapshot[], accountId: string) {
   return snapshots
@@ -75,19 +76,15 @@ export default function AssetsClient({
     }));
   }, [latestByAccount]);
 
+  // 記録した日そのものではなく、記録がある月ごとに区切って表示する
+  // （月末時点での資産合計を1点として繋ぐ）。
   const trend = useMemo(() => {
-    const dateSet = new Set(snapshots.map((s) => s.date));
-    const dates = [...dateSet].sort();
-    return dates.map((date) => {
-      let sum = 0;
-      for (const account of accounts) {
-        const upToDate = snapshots
-          .filter((s) => s.assetAccountId === account.id && s.date <= date)
-          .sort((a, b) => b.date.localeCompare(a.date))[0];
-        if (upToDate) sum += upToDate.value;
-      }
-      return { date: date.slice(5), 資産合計: sum };
-    });
+    const monthSet = new Set(snapshots.map((s) => s.date.slice(0, 7)));
+    const months = [...monthSet].sort();
+    return months.map((month) => ({
+      date: month.slice(5) + "月",
+      資産合計: totalAssetsAsOf(accounts, snapshots, `${month}-31`),
+    }));
   }, [snapshots, accounts]);
 
   const history = useMemo(
